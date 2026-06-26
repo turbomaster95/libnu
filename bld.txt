@@ -1,7 +1,7 @@
 [global]
 CC=gcc
 CFLAGS=-Wall -Wextra -O2 -std=gnu99 -fPIC -D_GNU_SOURCE -Wno-unused-parameter -Wno-unused-function
-INCLUDES=-I./include -I.
+INCLUDES=-Iinclude/ -Ibuild/
 SOURCES=src/main.c, src/proc.c, src/log.c, src/sig.c
 TARGET_SO=libnu.so
 TARGET_A=libnu.a

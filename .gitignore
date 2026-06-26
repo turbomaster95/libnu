@@ -10,3 +10,4 @@ configure
 *.a
 *.so
 *.o
+build/
