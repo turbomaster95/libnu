@@ -1,0 +1,8 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#cmakedefine HAVE_SYS_EPOLL_H
+#cmakedefine HAVE_SYS_INOTIFY_H
+#cmakedefine HAVE_TIMERFD_CREATE
+
+#endif // CONFIG_H
