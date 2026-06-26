@@ -1,6 +1,7 @@
 #include <config.h>
 #include <nu.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,4 +62,55 @@ bool nu_process_spawn(nu_loop_t *loop, char *const argv[], nu_proc_io_cb stdout_
     wrapper->user_data = data;
 
     return nu_loop_add_fd(loop, p_fds[0], internal_proc_handler, wrapper);
+}
+
+bool nu_daemonize(void) {
+    pid_t pid;
+
+    pid = fork();
+    if (pid < 0) {
+        NU_ERROR("First fork failed during daemonization");
+        return false;
+    }
+    if (pid > 0) {
+        exit(EXIT_SUCCESS); // Parent exits cleanly
+    }
+
+    if (setsid() < 0) {
+        NU_ERROR("setsid failed during daemonization");
+        return false;
+    }
+
+    pid = fork();
+    if (pid < 0) {
+        NU_ERROR("Second fork failed during daemonization");
+        return false;
+    }
+    if (pid > 0) {
+        exit(EXIT_SUCCESS); // First child exits cleanly
+    }
+
+    // Wipes out inherited masks so open() calls can set explicit permissions.
+    umask(0);
+
+    if (chdir("/") < 0) {
+        NU_ERROR("chdir to root failed during daemonization");
+        return false;
+    }
+
+    int dev_null = open("/dev/null", O_RDWR);
+    if (dev_null >= 0) {
+        dup2(dev_null, STDIN_FILENO);  // Redirect stdin
+        dup2(dev_null, STDOUT_FILENO); // Redirect stdout
+        dup2(dev_null, STDERR_FILENO); // Redirect stderr
+        
+        if (dev_null > STDERR_FILENO) {
+            close(dev_null);
+        }
+    } else {
+        NU_ERROR("Failed to open /dev/null during daemonization");
+        return false;
+    }
+
+    return true;
 }
