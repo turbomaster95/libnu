@@ -26,6 +26,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <errno.h>
+#include <intnu.h>
 
 char** nu_str_split(const char *str, const char *delim, int *out_count) {
     char *s = strdup(str);
@@ -95,22 +96,6 @@ char* nu_json_extract(const char *json, const char *key) {
     res[len] = '\0';
     return nu_str_trim(res);
 }
-
-#define MAX_EVENTS 64
-
-typedef struct {
-    int fd;
-    nu_event_cb cb;
-    void *data;
-    bool is_inotify;
-} nu_item_t;
-
-struct nu_loop {
-    int epoll_fd;
-    int inotify_fd;
-    nu_item_t *items[MAX_EVENTS];
-    int item_count;
-};
 
 nu_loop_t* nu_loop_create(void) {
     nu_loop_t *loop = malloc(sizeof(nu_loop_t));

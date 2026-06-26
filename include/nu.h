@@ -4,6 +4,22 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+typedef enum {
+    NU_LOG_DEBUG,
+    NU_LOG_INFO,
+    NU_LOG_WARN,
+    NU_LOG_ERROR
+} nu_log_level_t;
+
+typedef void (*nu_proc_io_cb)(const char *buffer, size_t len, void *data);
+
+void nu_log_output(nu_log_level_t level, const char *file, int line, const char *fmt, ...);
+
+#define NU_DEBUG(fmt, ...) nu_log_output(NU_LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define NU_INFO(fmt, ...)  nu_log_output(NU_LOG_INFO,  __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define NU_WARN(fmt, ...)  nu_log_output(NU_LOG_WARN,  __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define NU_ERROR(fmt, ...) nu_log_output(NU_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
 char** nu_str_split(const char *str, const char *delim, int *out_count);
 void   nu_str_free_list(char **list, int count);
@@ -41,5 +57,12 @@ void       nu_ipc_listen(const char *sock_path, nu_ipc_cb cb, void *data);
 
 // Sends a quick message to a listening IPC server and returns response (or NULL)
 char* nu_ipc_send(const char *sock_path, const char *message);
+
+// Mask and monitor system signals via epoll loop.
+// Pass signum (e.g., SIGINT, SIGTERM). Returns false on failure.
+bool nu_loop_add_signal(nu_loop_t *loop, int signum, nu_event_cb cb, void *data);
+
+// Exec background processes without hanging. Pipeline matches standard argv format.
+bool nu_process_spawn(nu_loop_t *loop, char *const argv[], nu_proc_io_cb stdout_cb, void *data);
 
 #endif // LIBNU_H

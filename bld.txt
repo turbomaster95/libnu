@@ -1,0 +1,15 @@
+[global]
+CC=gcc
+CFLAGS=-Wall -Wextra -O2 -std=gnu99 -fPIC -D_GNU_SOURCE -Wno-unused-parameter -Wno-unused-function
+INCLUDES=-I./include -I.
+SOURCES=src/main.c, src/proc.c, src/log.c, src/sig.c
+TARGET_SO=libnu.so
+TARGET_A=libnu.a
+
+[probes]
+HAVE_SYS_EPOLL_H=#include <sys/epoll.h>\nint main(){}
+HAVE_SYS_INOTIFY_H=#include <sys/inotify.h>\nint main(){}
+HAVE_TIMERFD_CREATE=#include <sys/timerfd.h>\nint main(){timerfd_create(0,0);}
+HAVE_SYS_SIGNALFD_H=#include <sys/signalfd.h>\nint main(){}
+HAVE_SIGNALFD=#include <sys/signalfd.h>\n#include <signal.h>\nint main(){sigset_t m;sigemptyset(&m);signalfd(-1,&m,0);}
+

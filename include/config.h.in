@@ -4,5 +4,7 @@
 #cmakedefine HAVE_SYS_EPOLL_H
 #cmakedefine HAVE_SYS_INOTIFY_H
 #cmakedefine HAVE_TIMERFD_CREATE
+#cmakedefine HAVE_SYS_SIGNALFD_H
+#cmakedefine HAVE_SIGNALFD
 
 #endif // CONFIG_H
