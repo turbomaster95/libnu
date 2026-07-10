@@ -23,7 +23,7 @@ configure_file(
 
 include_directories(include "${CMAKE_CURRENT_BINARY_DIR}")
 
-set(LIB_SOURCES src/main.c src/proc.c src/log.c src/sig.c)
+set(LIB_SOURCES src/main.c src/proc.c src/log.c src/sig.c src/mm.c src/map.c)
 
 # Build both Dynamic (.so) and Static (.a) libraries
 add_library(nu_shared SHARED ${LIB_SOURCES})

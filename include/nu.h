@@ -4,6 +4,17 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#ifndef NUO_H
+
+#define NU_SMASH_CFG()     _Static_assert(0, "Libnu Error: You must #include <nuo.h> to use NU_SMASH_CFG()")
+#define NU_SMASH_DATA(var) _Static_assert(0, "Libnu Error: You must #include <nuo.h> to use NU_SMASH_DATA()")
+#define NU_SMASH_FLAGS()   _Static_assert(0, "Libnu Error: You must #include <nuo.h> to use NU_SMASH_FLAGS()")
+#define NU_SMASH_REGS()    _Static_assert(0, "Libnu Error: You must #include <nuo.h> to use NU_SMASH_REGS()")
+#define NU_SMASH_SIMD()    _Static_assert(0, "Libnu Error: You must #include <nuo.h> to use NU_SMASH_SIMD()")
+#define nu_obfs(...)       _Static_assert(0, "Libnu Error: You must #include <nuo.h> to use nu_obfs()")
+
+#endif /* NUO_H */
+
 typedef enum {
     NU_LOG_DEBUG,
     NU_LOG_INFO,
@@ -19,6 +30,63 @@ void nu_log_output(nu_log_level_t level, const char *file, int line, const char 
 #define NU_INFO(fmt, ...)  nu_log_output(NU_LOG_INFO,  __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define NU_WARN(fmt, ...)  nu_log_output(NU_LOG_WARN,  __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define NU_ERROR(fmt, ...) nu_log_output(NU_LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+
+typedef struct nu_mm nu_mm_t;
+
+typedef enum {
+    NU_MM_ARENA,
+    NU_MM_BUDDY,
+    NU_MM_SLAB,
+    NU_MM_SLOB
+} nu_mm_type_t;
+
+// Creates a new nu_mm instance with the specified type, 
+// backing memory (ptr. to the memory that is supposed to be managed) and size of the memory.
+nu_mm_t* nu_mm_create(nu_mm_type_t type, void *backing_mem, size_t size);
+
+// Destroys a nu_mm instance
+void nu_mm_destroy(nu_mm_t *mm);
+
+// Alloc and Free for a specific instance.
+void* nu_alloc(nu_mm_t *mm, size_t size);
+void  nu_free(nu_mm_t *mm, void *ptr);
+
+typedef struct nu_map nu_map_t;
+
+// Creates a new hashmap using a specific allocator instance.
+// arg1: The backing memory manager instance to handle allocations.
+// arg2: Baseline slot count (must be a power of 2 for optimization).
+nu_map_t* nu_map_create(nu_mm_t *mm, size_t initial_capacity);
+
+// Tears down the map table and frees duplicated keys.
+void nu_map_destroy(nu_map_t *map);
+
+// Inserts or updates a key-value association.
+// Automatically doubles table size when the load factor hits 70%.
+bool nu_map_set(nu_map_t *map, const char *key, void *value);
+
+// Looks up a key and returns its associated pointer value.
+// Returns NULL if the key is not found.
+void* nu_map_get(nu_map_t *map, const char *key);
+
+// Removes a key from the map
+bool nu_map_delete(nu_map_t *map, const char *key);
+
+// Returns total number of active elements inside the map.
+size_t nu_map_size(nu_map_t *map);
+
+// Raw 64-bit block operations
+void nu_xtea_encrypt_block(const uint32_t key[4], uint32_t block[2]);
+void nu_xtea_decrypt_block(const uint32_t key[4], uint32_t block[2]);
+
+// Derives a valid 128-bit key out of any string passphrase
+void nu_xtea_derive_key(const char *passphrase, uint32_t key[4]);
+
+// CTR Stream Mode. 
+// Handles arbitrary
+ * - Symmetrical: passing encrypted data through this function decrypts it.
+ * - Requires an 8-byte nonce/initialization vector (use a random number or counter).
+void nu_xtea_crypt_ctr(const uint32_t key[4], uint64_t nonce, uint8_t *data, size_t size);
 
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
 char** nu_str_split(const char *str, const char *delim, int *out_count);

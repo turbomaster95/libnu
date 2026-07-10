@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <nu.h>
 #include <nuo.h>
 
 __attribute__((noinline))
@@ -84,7 +85,7 @@ int main(void) {
 
     nu_obfs(12);
 
-    printf("[*] Decrypting...\n");
+    printf("Decrypting...\n");
     xtea_decrypt_block(32, block, key);
     printf("Decrypted Asset: %s\n", asset);
 

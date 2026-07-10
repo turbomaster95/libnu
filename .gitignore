@@ -1,13 +1,12 @@
-# Compiled files
-*.out
-build/
-configure
-
-.*
+# Ignore ignoring gitignore
 !.gitignore
+
+# Compiled files
+.*
 *.ninja
-**/config.h
 *.a
 *.so
 *.o
+configure
 build/
+
