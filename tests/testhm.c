@@ -60,6 +60,6 @@ int main(void) {
     nu_map_destroy(map);
     nu_mm_destroy(mm);
 
-    printf("All hashmap assertions passed successfully!\n");
+    NU_INFO("All hashmap assertions passed successfully!\n");
     return 0;
 }

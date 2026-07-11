@@ -41,7 +41,7 @@ typedef enum {
     NU_MM_SLOB
 } nu_mm_type_t;
 
-// Creates a new nu_mm instance with the specified type, 
+// Creates a new nu_mm instance with the specified type,
 // backing memory (ptr. to the memory that is supposed to be managed) and size of the memory.
 nu_mm_t* nu_mm_create(nu_mm_type_t type, void *backing_mem, size_t size);
 
@@ -88,6 +88,86 @@ void nu_xtea_derive_key(const char *passphrase, uint32_t key[4]);
 // Passing encrypted data through this function decrypts it.
 // Requires an 8-byte nonce/initialization vector (use a random number or counter).
 void nu_xtea_crypt_ctr(const uint32_t key[4], uint64_t nonce, uint8_t *data, size_t size);
+
+typedef struct {
+    uint32_t type;         /* User-defined token type identifier */
+    const char *text;      /* Direct pointer into source buffer string slice */
+    size_t length;         /* Length of the token string slice */
+    size_t line;           /* Line number tracker for diagnostics */
+    size_t column;         /* Precise column start index for error pointers */
+} nu_token_t;
+
+typedef struct {
+    const char *source;    /* Target code text buffer */
+    size_t cursor;         /* Read index offset */
+    size_t line;           /* Current line index tracker */
+    size_t line_start;     /* Index offset where current line started */
+} nu_lexer_t;
+
+// Lexer Functions
+void nu_lexer_init(nu_lexer_t *lexer, const char *source);
+char nu_lexer_peek_char(nu_lexer_t *lexer);
+char nu_lexer_advance_char(nu_lexer_t *lexer);
+void nu_lexer_skip_whitespace(nu_lexer_t *lexer);
+
+typedef struct nu_ast_node nu_ast_node_t;
+
+typedef union {
+    int64_t i64;
+    double f64;
+    const char *str;
+    void *raw;
+} nu_ast_val_t;
+
+struct nu_ast_node {
+    uint32_t type;                     /* User-defined AST node variant type */
+    nu_ast_val_t val;                  /* Multi-type data storage variant slot */
+    nu_ast_node_t *first_child;        /* Head of children sibling sequence chain */
+    nu_ast_node_t *last_child;         /* Tail of children sequence chain */
+    nu_ast_node_t *next_sibling;       /* Linked list pointer to adjacent scope node */
+};
+
+typedef struct {
+    nu_mm_t *mm;                       /* Memory manager instance */
+    nu_ast_node_t *root;               /* AST Entry execution target root */
+} nu_ast_t;
+
+// AST (Abstract Syntax Tree) Functions.
+nu_ast_t* nu_ast_create(nu_mm_t *mm);
+nu_ast_node_t* nu_ast_new_node(nu_ast_t *ast, uint32_t type);
+nu_ast_node_t* nu_ast_new_branch(nu_ast_t *ast, uint32_t type, size_t child_count, ...);
+void nu_ast_add_child(nu_ast_node_t *parent, nu_ast_node_t *child);
+void nu_ast_set_str(nu_ast_t *ast, nu_ast_node_t *node, const char *str, size_t len);
+void nu_ast_set_int(nu_ast_node_t *node, int64_t val);
+void nu_ast_set_float(nu_ast_node_t *node, double val);
+void nu_ast_destroy(nu_ast_t *ast);
+
+typedef struct nu_parser nu_parser_t;
+
+typedef nu_ast_node_t* (*nu_nud_fn)(nu_parser_t *parser, nu_token_t tok);
+typedef nu_ast_node_t* (*nu_led_fn)(nu_parser_t *parser, nu_ast_node_t *left, nu_token_t tok);
+
+typedef struct {
+    nu_nud_fn nud;          /* Null Denotation handler (Prefix / Literals / Unary) */
+    nu_led_fn led;          /* Left Denotation handler (Infix / Postfix operators) */
+    uint32_t lbp;           /* Left Binding Power value (Precedence hierarchy weight) */
+} nu_parser_rule_t;
+
+struct nu_parser {
+    nu_lexer_t *lexer;
+    nu_ast_t *ast;
+    nu_token_t current;
+    nu_token_t peek;
+    nu_token_t (*next_token_cb)(nu_lexer_t *lexer);
+    const nu_parser_rule_t *rules;
+    uint32_t max_token_id;
+};
+
+// Pratt Parser funcs.
+void nu_parser_init(nu_parser_t *parser, nu_lexer_t *lexer, nu_ast_t *ast, nu_token_t (*next_token_cb)(nu_lexer_t *), const nu_parser_rule_t *rules, uint32_t max_token_id);
+void nu_parser_advance(nu_parser_t *parser);
+bool nu_parser_match(nu_parser_t *parser, uint32_t expected_type);
+nu_ast_node_t* nu_parse_expression(nu_parser_t *parser, uint32_t binding_power);
 
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
 char** nu_str_split(const char *str, const char *delim, int *out_count);

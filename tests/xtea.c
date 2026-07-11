@@ -1,93 +1,32 @@
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
+#include <assert.h>
 #include <nu.h>
-#include <nuo.h>
-
-__attribute__((noinline))
-void xtea_encrypt_block(uint32_t num_rounds, uint32_t v[2], uint32_t const key[4]) {
-    uint32_t i;
-    uint32_t v0 = v[0], v1 = v[1], sum = 0;
-    uint32_t delta = 0x9E3779B9;
-
-    NU_SMASH_DATA(v0);
-    NU_SMASH_DATA(v1);
-    NU_SMASH_DATA(sum);
-
-    for (i = 0; i < num_rounds; i++) {
-        NU_SMASH_SIMD();
-        nu_obfs(4); 
-
-        NU_SMASH_DATA(v1);
-        v0 += (((v1 << 4) ^ (v1 >> 5)) + v1) ^ (sum + key[sum & 3]);
-        
-        NU_SMASH_FLAGS();
-        sum += delta;
-        
-        NU_SMASH_DATA(v0);
-        NU_SMASH_DATA(sum);
-        
-        NU_SMASH_SPECIFIC_CFG: 
-        NU_SMASH_CFG();
-
-        v1 += (((v0 << 4) ^ (v0 >> 5)) + v0) ^ (sum + key[(sum >> 11) & 3]);
-    }
-
-    nu_obfs(8);
-    v[0] = v0; v[1] = v1;
-}
-
-__attribute__((noinline))
-void xtea_decrypt_block(uint32_t num_rounds, uint32_t v[2], uint32_t const key[4]) {
-    uint32_t i;
-    uint32_t v0 = v[0], v1 = v[1];
-    uint32_t delta = 0x9E3779B9;
-    uint32_t sum = delta * num_rounds;
-
-    NU_SMASH_DATA(v0);
-    NU_SMASH_DATA(v1);
-    NU_SMASH_DATA(sum);
-
-    for (i = 0; i < num_rounds; i++) {
-        NU_SMASH_SIMD();
-        nu_obfs(4);
-
-        NU_SMASH_DATA(v0);
-        v1 -= (((v0 << 4) ^ (v0 >> 5)) + v0) ^ (sum + key[(sum >> 11) & 3]);
-        
-        NU_SMASH_FLAGS();
-        sum -= delta;
-        
-        NU_SMASH_DATA(v1);
-        NU_SMASH_DATA(sum);
-        
-        NU_SMASH_REG_JUMP:
-        NU_SMASH_ID_CFG:
-        NU_SMASH_CFG();
-
-        v0 -= (((v1 << 4) ^ (v1 >> 5)) + v1) ^ (sum + key[sum & 3]);
-    }
-
-    nu_obfs(8);
-    v[0] = v0; v[1] = v1;
-}
 
 int main(void) {
-    uint32_t key[4] = {0xDEADBEEF, 0xCAFEBABE, 0x01234567, 0x89ABCDEF};
-    char asset[8] = {'M', 'o', 'l', 't', '_', 'O', 'S', '\0'}; 
-    uint32_t *block = (uint32_t *)asset;
+    char message[] = "This is an odd-sized secret msg!"; /* 32 bytes */
+    size_t msg_len = strlen(message);
+    uint64_t simple_nonce = 0xABCDEF1234567890ULL;
 
-    printf("Original Asset:  %s\n", asset);
+    uint32_t derived_key[4];
+    nu_xtea_derive_key("my_ultra_secure_password_123", derived_key);
 
-    printf("Encrypting...\n");
-    xtea_encrypt_block(32, block, key);
-    printf("Encrypted Hex:   0x%08X %08X\n", block[0], block[1]);
+    /* Encrypt in place */
+    nu_xtea_crypt_ctr(derived_key, simple_nonce, (uint8_t *)message, msg_len);
+    assert(strcmp(message, "This is an odd-sized secret msg!") != 0); // Must be scrambled
 
-    nu_obfs(12);
+    nu_xtea_crypt_ctr(derived_key, simple_nonce, (uint8_t *)message, msg_len);
+    assert(strcmp(message, "This is an odd-sized secret msg!") == 0); // Must be back to normal
 
-    printf("Decrypting...\n");
-    xtea_decrypt_block(32, block, key);
-    printf("Decrypted Asset: %s\n", asset);
+    uint32_t hard_key[4] = {0x11111111, 0x22222222, 0x33333333, 0x44444444};
+    uint32_t raw_block[2] = {0xDEADBEEF, 0xCAFEBABE};
 
+    /* Directly target low-level blocks */
+    nu_xtea_encrypt_block(hard_key, raw_block);
+    assert(raw_block[0] != 0xDEADBEEF);
+
+    nu_xtea_decrypt_block(hard_key, raw_block);
+    assert(raw_block[0] == 0xDEADBEEF && raw_block[1] == 0xCAFEBABE);
     return 0;
 }
+

@@ -23,7 +23,18 @@ configure_file(
 
 include_directories(include "${CMAKE_CURRENT_BINARY_DIR}")
 
-set(LIB_SOURCES src/main.c src/proc.c src/log.c src/sig.c src/mm.c src/map.c)
+set(LIB_SOURCES
+	src/main.c
+	src/proc.c
+	src/log.c
+	src/sig.c
+	src/mm.c
+	src/map.c
+	src/lex.c
+	src/ast.c
+	src/pratt.c
+	src/xtea.c
+)
 
 # Build both Dynamic (.so) and Static (.a) libraries
 add_library(nu_shared SHARED ${LIB_SOURCES})
@@ -48,4 +59,5 @@ install(TARGETS nu_shared nu_static
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-install(FILES include/libnu.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES include/nu.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES include/nuo.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
