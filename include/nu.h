@@ -169,6 +169,22 @@ void nu_parser_advance(nu_parser_t *parser);
 bool nu_parser_match(nu_parser_t *parser, uint32_t expected_type);
 nu_ast_node_t* nu_parse_expression(nu_parser_t *parser, uint32_t binding_power);
 
+typedef enum {
+    NU_HASH_MD5,
+    NU_HASH_SHA1,
+    NU_HASH_SHA256,
+    NU_HASH_SHA512
+} nu_hash_type_t;
+
+// Computes a cryptographic hash over a binary data buffer.
+// arg1: The memory manager instance to allocate the resulting hex string.
+// arg2: The hashing algorithm type variant (e.g., NU_HASH_SHA256).
+// arg3: Pointer to the input data buffer.
+// arg4: Size of the input data buffer in bytes.
+// Returns a null-terminated, lowercase hexadecimal string containing the hash,
+// or NULL if the allocation fails or an unsupported hash type is provided.
+char* nu_hash_encode(nu_mm_t *mm, nu_hash_type_t type, const uint8_t *data, size_t len);
+
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
 char** nu_str_split(const char *str, const char *delim, int *out_count);
 void   nu_str_free_list(char **list, int count);

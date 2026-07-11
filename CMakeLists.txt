@@ -34,6 +34,10 @@ set(LIB_SOURCES
 	src/ast.c
 	src/pratt.c
 	src/xtea.c
+	src/hash.c
+	src/hashes/md5.c
+	src/hashes/sha1.c
+	src/hashes/sha256.c
 )
 
 # Build both Dynamic (.so) and Static (.a) libraries
