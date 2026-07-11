@@ -13,11 +13,6 @@ void on_config_modified(int fd, void *data) {
 int main() {
     NU_INFO("--- testing libnu utils ---\n");
 
-    const char *api_payload = "{\"status\": \"active\", \"battery\": \"89%\"}";
-    char *bat = nu_json_extract(api_payload, "battery");
-    NU_INFO("Extracted JSON Property: %s\n", bat); // Prints 89%
-    free(bat);
-
     int count = 0;
     char **tags = nu_str_split("libnu,is,good,and,the,best", ",", &count);
     for(int i = 0; i < count; i++) {

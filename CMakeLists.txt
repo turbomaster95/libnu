@@ -38,6 +38,7 @@ set(LIB_SOURCES
 	src/hashes/md5.c
 	src/hashes/sha1.c
 	src/hashes/sha256.c
+	src/json.c
 )
 
 # Build both Dynamic (.so) and Static (.a) libraries

@@ -5,6 +5,16 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/* JSON Node Type Variant IDs */
+#define NU_AST_JSON_NULL    100
+#define NU_AST_JSON_BOOL    101
+#define NU_AST_JSON_INT     102
+#define NU_AST_JSON_FLOAT   103
+#define NU_AST_JSON_STRING  104
+#define NU_AST_JSON_ARRAY   105
+#define NU_AST_JSON_OBJECT  106
+#define NU_AST_JSON_PAIR    107  /* Represents "key": value. val.str = key, first_child = value */
+
 #ifndef NUO_H
 
 #define NU_SMASH_CFG()     _Static_assert(0, "Libnu Error: You must #include <nuo.h> to use NU_SMASH_CFG()")
@@ -185,16 +195,21 @@ typedef enum {
 // or NULL if the allocation fails or an unsupported hash type is provided.
 char* nu_hash_encode(nu_mm_t *mm, nu_hash_type_t type, const uint8_t *data, size_t len);
 
+
+// Encodes an AST node tree into a raw JSON string stream.
+// Allocates the resulting buffer from the provided memory manager.
+char* nu_json_encode(nu_mm_t *mm, const nu_ast_node_t *root);
+
+// Decodes a raw JSON string into a structured, executable AST node tree.
+// All parsed nodes are completely managed by the provided memory manager.
+nu_ast_node_t* nu_json_decode(nu_mm_t *mm, const char *json);
+
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
 char** nu_str_split(const char *str, const char *delim, int *out_count);
 void   nu_str_free_list(char **list, int count);
 
 // Trims whitespace in-place (modifies the buffer)
 char* nu_str_trim(char *str);
-
-// Quick JSON string extractor. Extracts value matching a top-level or dotted key.
-// Caller must free() returned string. Returns NULL if not found.
-char* nu_json_extract(const char *json, const char *key);
 
 typedef struct nu_loop nu_loop_t;
 typedef void (*nu_event_cb)(int fd, void *data);

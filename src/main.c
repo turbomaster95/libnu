@@ -74,29 +74,6 @@ char* nu_str_trim(char *str) {
     return str;
 }
 
-char* nu_json_extract(const char *json, const char *key) {
-    char target[128];
-    snprintf(target, sizeof(target), "\"%s\"", key);
-    const char *pos = strstr(json, target);
-    if (!pos) return NULL;
-    
-    pos = strchr(pos + strlen(target), ':');
-    if (!pos) return NULL;
-    pos++;
-    while (*pos && (isspace((unsigned char)*pos) || *pos == '"')) pos++;
-    
-    const char *end = pos;
-    while (*end && *end != '"' && *end != ',' && *end != '}' && *end != ']') end++;
-    
-    size_t len = end - pos;
-    if (len == 0) return NULL;
-    
-    char *res = malloc(len + 1);
-    strncpy(res, pos, len);
-    res[len] = '\0';
-    return nu_str_trim(res);
-}
-
 nu_loop_t* nu_loop_create(void) {
     nu_loop_t *loop = malloc(sizeof(nu_loop_t));
     if (!loop) return NULL;
