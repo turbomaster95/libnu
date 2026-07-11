@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifndef NUO_H
 
@@ -82,10 +83,10 @@ void nu_xtea_decrypt_block(const uint32_t key[4], uint32_t block[2]);
 // Derives a valid 128-bit key out of any string passphrase
 void nu_xtea_derive_key(const char *passphrase, uint32_t key[4]);
 
-// CTR Stream Mode. 
-// Handles arbitrary
- * - Symmetrical: passing encrypted data through this function decrypts it.
- * - Requires an 8-byte nonce/initialization vector (use a random number or counter).
+// CTR Stream Mode.
+// Handles arbitrary data lengths
+// Passing encrypted data through this function decrypts it.
+// Requires an 8-byte nonce/initialization vector (use a random number or counter).
 void nu_xtea_crypt_ctr(const uint32_t key[4], uint64_t nonce, uint8_t *data, size_t size);
 
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
