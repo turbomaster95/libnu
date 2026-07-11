@@ -292,3 +292,67 @@ nu_ast_node_t* nu_json_decode(nu_mm_t *mm, const char *json) {
     json_lex_t l = { .src = json, .pos = 0, .current = json[0] };
     return json_parse_value(mm, &l);
 }
+
+nu_ast_node_t* nu_json_get(const nu_ast_node_t *root, const char *keypath) {
+    if (!root || !keypath || *keypath == '\0') return (nu_ast_node_t*)root;
+
+    const nu_ast_node_t *curr = root;
+    const char *p = keypath;
+
+    while (*p != '\0' && curr) {
+        /* Isolate the current key segment length up to the next '.' */
+        const char *next_dot = strchr(p, '.');
+        size_t seg_len = next_dot ? (size_t)(next_dot - p) : strlen(p);
+
+        if (seg_len == 0) {
+            if (next_dot) { p = next_dot + 1; continue; }
+            break;
+        }
+
+        if (curr->type == NU_AST_JSON_OBJECT) {
+            const nu_ast_node_t *pair = curr->first_child;
+            const nu_ast_node_t *match = NULL;
+
+            while (pair) {
+                if (pair->type == NU_AST_JSON_PAIR && pair->val.str) {
+                    if (strncmp(pair->val.str, p, seg_len) == 0 && pair->val.str[seg_len] == '\0') {
+                        match = pair->first_child; /* Target value node */
+                        break;
+                    }
+                }
+                pair = pair->next_sibling;
+            }
+            curr = match;
+
+        } else if (curr->type == NU_AST_JSON_ARRAY) {
+            long long target_idx = 0;
+            size_t i = 0;
+            for (; i < seg_len; i++) {
+                if (p[i] < '0' || p[i] > '9') { curr = NULL; break; }
+                target_idx = target_idx * 10 + (p[i] - '0');
+            }
+            if (curr) {
+                const nu_ast_node_t *item = curr->first_child;
+                long long curr_idx = 0;
+                while (item && curr_idx < target_idx) {
+                    item = item->next_sibling;
+                    curr_idx++;
+                }
+                curr = item;
+            }
+        } else {
+            /* Attempted to query into a scalar node (string, int, etc.) */
+            return NULL;
+        }
+
+        /* Move point past the dot if it exists */
+        if (next_dot) {
+            p = next_dot + 1;
+        } else {
+            break;
+        }
+    }
+
+    return (nu_ast_node_t*)curr;
+}
+

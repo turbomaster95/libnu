@@ -204,6 +204,42 @@ char* nu_json_encode(nu_mm_t *mm, const nu_ast_node_t *root);
 // All parsed nodes are completely managed by the provided memory manager.
 nu_ast_node_t* nu_json_decode(nu_mm_t *mm, const char *json);
 
+// Query an AST JSON object using a dot/index notation path string.
+// Eg: nu_json_get(root, "users.0.profile.email")
+// Returns the matching nu_ast_node_t pointer or NULL if missing.
+nu_ast_node_t* nu_json_get(const nu_ast_node_t *root, const char *keypath);
+
+typedef struct nu_trie_node nu_trie_node_t;
+
+struct nu_trie_node {
+    void *value;                   /* User payload data pointer */
+    nu_trie_node_t *next_sibling;  /* Right sibling in the same level */
+    nu_trie_node_t *first_child;   /* Downward edge to next characters */
+    char edge_char;                /* Character label for this specific incoming path */
+    bool is_terminal;              /* Flag checking if this node represents a complete entry */
+};
+
+typedef struct {
+    nu_mm_t *mm;                   /* Attached memory manager instance */
+    nu_trie_node_t *root;          /* Tree entry root pointer */
+    size_t size;                   /* Total active items tracked */
+} nu_trie_t;
+
+// Creates an empty Trie using a specified memory manager instance
+nu_trie_t* nu_trie_create(nu_mm_t *mm);
+
+// Inserts or updates an association. Returns false if allocation fails.
+bool nu_trie_insert(nu_trie_t *trie, const char *key, void *value);
+
+// Looks up a specific exact key string. Returns payload pointer, or NULL if not found.
+void* nu_trie_lookup(nu_trie_t *trie, const char *key);
+
+// Removes a key association. Cleans up stale hanging branches automatically.
+bool nu_trie_delete(nu_trie_t *trie, const char *key);
+
+// Destroys all allocated branches and nodes within the tree structure
+void nu_trie_destroy(nu_trie_t *trie);
+
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
 char** nu_str_split(const char *str, const char *delim, int *out_count);
 void   nu_str_free_list(char **list, int count);
