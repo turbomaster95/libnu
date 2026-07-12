@@ -281,6 +281,50 @@ int nu_printf(const char *format, ...);
 // Writes a raw buffer to a target file descriptor (1=stdout, 2=stderr).
 int nu_fd_write(int fd, const char *buf, size_t len);
 
+typedef enum {
+    NU_ARG_BOOL,
+    NU_ARG_INT,
+    NU_ARG_STR
+} nu_arg_type_t;
+
+typedef struct {
+    nu_arg_type_t type;
+    const char *short_flag; // e.g., "-p" (or NULL)
+    const char *long_flag;  // e.g., "--port" (or NULL)
+    const char *help;       // Help description text
+    bool is_set;            // Flag indicating if it was supplied
+    union {
+        bool b;
+        int64_t i;
+        const char *s;
+    } val;
+} nu_arg_def_t;
+
+typedef struct {
+    nu_mm_t *mm;
+    nu_trie_t *flag_trie;      // Matches flags directly to definition pointers
+    const char **positionals;  // Array of non-flag arguments captured
+    size_t positional_count;
+    size_t positional_cap;
+    const char *program_name;
+} nu_arg_parser_t;
+
+// Initializes the argument parsing layout structure using an allocator
+nu_arg_parser_t* nu_arg_create(nu_mm_t *mm);
+
+// Registers an argument definition configuration.
+bool nu_arg_register(nu_arg_parser_t *ap, nu_arg_def_t *def);
+
+// Parses raw system arguments.
+// Returns false if an unknown flag is met or a value conversion fails.
+bool nu_arg_parse(nu_arg_parser_t *ap, int argc, char *argv[]);
+
+// Prints a formatted help layout to stdout.
+void nu_arg_print_help(nu_arg_parser_t *ap, nu_arg_def_t defs[], size_t def_count);
+
+// Cleans up the argument parser allocations cleanly
+void nu_arg_destroy(nu_arg_parser_t *ap);
+
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
 char** nu_str_split(const char *str, const char *delim, int *out_count);
 void   nu_str_free_list(char **list, int count);

@@ -43,6 +43,7 @@ set(LIB_SOURCES
 	src/lz4.c
 	src/time.c
 	src/print.c
+	src/argpars.c
 )
 
 # Build both Dynamic (.so) and Static (.a) libraries
