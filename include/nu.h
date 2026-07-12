@@ -274,6 +274,13 @@ int nu_vsnprintf(char *str, size_t size, const char *format, va_list ap);
 // Variadic wrapper for nu_vsnprintf.
 int nu_snprintf(char *str, size_t size, const char *format, ...);
 
+// Formats a string and prints it directly to standard output (stdout).
+// Returns total characters printed.
+int nu_printf(const char *format, ...);
+
+// Writes a raw buffer to a target file descriptor (1=stdout, 2=stderr).
+int nu_fd_write(int fd, const char *buf, size_t len);
+
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
 char** nu_str_split(const char *str, const char *delim, int *out_count);
 void   nu_str_free_list(char **list, int count);

@@ -1,6 +1,8 @@
 #include <nu.h>
 #include <stdarg.h>
 
+extern int write(int fd, const void *buf, size_t count);
+
 typedef struct {
     char *dest;
     size_t capacity;
@@ -180,5 +182,38 @@ int nu_snprintf(char *str, size_t size, const char *format, ...) {
     int result = nu_vsnprintf(str, size, format, ap);
     va_end(ap);
     return result;
+}
+
+int nu_fd_write(int fd, const char *buf, size_t len) {
+    if (!buf || len == 0) return 0;
+
+    size_t total_written = 0;
+    while (total_written < len) {
+        int bytes = write(fd, buf + total_written, len - total_written);
+        if (bytes < 0) {
+            return -1; // Write error encountered
+        }
+        total_written += bytes;
+    }
+    return (int)total_written;
+}
+
+int nu_printf(const char *format, ...) {
+    if (!format) return 0;
+
+    char buffer[1024];
+    va_list ap;
+    va_start(ap, format);
+    int chars_needed = nu_vsnprintf(buffer, sizeof(buffer), format, ap);
+    va_end(ap);
+
+    if (chars_needed <= 0) return 0;
+
+    size_t write_len = (size_t)chars_needed;
+    if (write_len >= sizeof(buffer)) {
+        write_len = sizeof(buffer) - 1;
+    }
+
+    return nu_fd_write(1, buffer, write_len);
 }
 
