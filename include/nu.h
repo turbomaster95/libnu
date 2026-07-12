@@ -2,6 +2,7 @@
 #define LIBNU_H
 
 #include <stddef.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -265,6 +266,13 @@ uint64_t nu_time_monotonic(void);
 // Automatically resumes if interrupted by an OS signal,
 // guaranteeing the full sleep duration.
 void nu_sleep_ns(uint64_t nanoseconds);
+
+// Formats a string into 'str' using a va_list argument pointer.
+// Returns the number of characters generated (excluding the null terminator).
+int nu_vsnprintf(char *str, size_t size, const char *format, va_list ap);
+
+// Variadic wrapper for nu_vsnprintf.
+int nu_snprintf(char *str, size_t size, const char *format, ...);
 
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
 char** nu_str_split(const char *str, const char *delim, int *out_count);

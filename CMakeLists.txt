@@ -42,6 +42,7 @@ set(LIB_SOURCES
 	src/trie.c
 	src/lz4.c
 	src/time.c
+	src/print.c
 )
 
 # Build both Dynamic (.so) and Static (.a) libraries
