@@ -240,6 +240,32 @@ bool nu_trie_delete(nu_trie_t *trie, const char *key);
 // Destroys all allocated branches and nodes within the tree structure
 void nu_trie_destroy(nu_trie_t *trie);
 
+// Returns the maximum possible size a compressed buffer could take for a given input size.
+// Useful for allocating the destination buffer safely before compressing.
+size_t nu_lz4_compress_bound(size_t src_size);
+
+// Compresses 'src' buffer into 'dst' buffer.
+// Returns the exact size of the compressed data written to 'dst', or 0 on failure.
+size_t nu_lz4_compress(const uint8_t *src, size_t src_size, uint8_t *dst, size_t dst_max_size);
+
+// Decompresses 'src' buffer into 'dst' buffer.
+// 'dst_max_size' must be the exact expected uncompressed size or greater.
+// Returns the exact size of the decompressed data, or 0 on failure.
+size_t nu_lz4_decompress(const uint8_t *src, size_t src_size, uint8_t *dst, size_t dst_max_size);
+
+// Returns current wall-clock time in nanoseconds since the Unix Epoch.
+// Subject to system clock adjustments (NTP).
+uint64_t nu_time_now(void);
+
+// Returns monotonically increasing time in nanoseconds since boot.
+// Strictly hardware-driven. Immune to NTP jumps.
+uint64_t nu_time_monotonic(void);
+
+// High-precision sleep (nanoseconds).
+// Automatically resumes if interrupted by an OS signal,
+// guaranteeing the full sleep duration.
+void nu_sleep_ns(uint64_t nanoseconds);
+
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
 char** nu_str_split(const char *str, const char *delim, int *out_count);
 void   nu_str_free_list(char **list, int count);

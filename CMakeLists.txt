@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -O2 -g -Wno-unused-function -I${CMAKE_CURRENT_BINARY_DIR}/include -Wno-unused-parameter")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -O2 -g -Wno-unused-function -I${CMAKE_CURRENT_BINARY_DIR}/include -Wno-unused-parameter -Wno-unused-label")
 
 include(CheckIncludeFile)
 include(CheckFunctionExists)
@@ -40,6 +40,8 @@ set(LIB_SOURCES
 	src/hashes/sha256.c
 	src/json.c
 	src/trie.c
+	src/lz4.c
+	src/time.c
 )
 
 # Build both Dynamic (.so) and Static (.a) libraries
