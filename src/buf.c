@@ -9,8 +9,6 @@ void nu_buf_init(nu_buf_t *buf, nu_mm_t *mm, size_t initial_cap) {
     buf->size = 0;
     buf->capacity = (initial_cap > 0) ? initial_cap : NU_BUF_DEFAULT_MIN_CAP;
     buf->data = (uint8_t *)nu_alloc(mm, buf->capacity);
-
-    // Fallback if allocation fails immediately
     if (!buf->data) {
         buf->capacity = 0;
     }
@@ -46,7 +44,6 @@ void nu_buf_append(nu_buf_t *buf, const void *data, size_t len) {
         nu_buf_reserve(buf, next_cap);
     }
 
-    // Double-check allocator successfully served the reservation
     if (buf->data && buf->size + len <= buf->capacity) {
         memcpy(buf->data + buf->size, data, len);
         buf->size += len;
@@ -71,3 +68,4 @@ void nu_buf_free(nu_buf_t *buf) {
     buf->size = 0;
     buf->capacity = 0;
 }
+
