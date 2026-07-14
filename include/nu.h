@@ -330,20 +330,20 @@ typedef struct nu_loop nu_loop_t;
 
 typedef struct nu_lua nu_lua_t;
 
-// Instantiates a hidden Lua state.
+// Instantiates a new Lua runner.
 nu_lua_t* nu_lua_create(nu_mm_t *mm, nu_loop_t *loop);
 
 // Executes a raw script string. Returns false on syntax or execution errors.
 bool nu_lua_run_string(nu_lua_t *ctx, const char *script);
 
-// Decrypts an XTEA-encrypted script/bytecode chunk directly into memory and runs it.
+// Decrypts an XTEA-encrypted script/bytecode chunk directly into memory and runs it on a Lua runner.
 bool nu_lua_run_encrypted(nu_lua_t *ctx, const uint8_t *enc_data, size_t size, const uint32_t key[4]);
 
-// Registers a standard C function to be available inside the Lua environment.
+// Registers a standard C function to be available inside the Lua runner's environment.
 typedef int (*nu_lua_fn)(nu_lua_t *ctx);
 void nu_lua_register(nu_lua_t *ctx, const char *name, nu_lua_fn fn);
 
-// Lifecycle destruction
+// Destroys a Lua runner.
 void nu_lua_destroy(nu_lua_t *ctx);
 
 int         nu_lua_get_top(nu_lua_t *ctx);
@@ -357,6 +357,33 @@ void        nu_lua_push_float(nu_lua_t *ctx, double val);
 void        nu_lua_push_str(nu_lua_t *ctx, const char *str);
 void        nu_lua_push_bool(nu_lua_t *ctx, bool val);
 
+typedef struct nu_py nu_py_t;
+
+// Instantiates a new Python runner.
+nu_py_t* nu_py_create(nu_mm_t *mm, nu_loop_t *loop);
+
+// Runs an arbitrary string inside a Python runner.
+bool     nu_py_run_string(nu_py_t *ctx, const char *script);
+
+// Destroys a Python runner.
+void     nu_py_destroy(nu_py_t *ctx);
+
+// Register functions to run in a Python runner's space.
+typedef void (*nu_py_fn)(nu_py_t *ctx);
+void     nu_py_register(nu_py_t *ctx, const char *name, nu_py_fn fn);
+
+// Simple stack-unpacking functions for function builders
+int         nu_py_get_argc(nu_py_t *ctx);
+int64_t     nu_py_to_int(nu_py_t *ctx, int index);
+double      nu_py_to_float(nu_py_t *ctx, int index);
+const char* nu_py_to_str(nu_py_t *ctx, int index);
+bool        nu_py_to_bool(nu_py_t *ctx, int index);
+
+void        nu_py_push_int(nu_py_t *ctx, int64_t val);
+void        nu_py_push_float(nu_py_t *ctx, double val);
+void        nu_py_push_str(nu_py_t *ctx, const char *str);
+void        nu_py_push_bool(nu_py_t *ctx, bool val);
+
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
 char** nu_str_split(const char *str, const char *delim, int *out_count);
 void   nu_str_free_list(char **list, int count);
@@ -364,7 +391,6 @@ void   nu_str_free_list(char **list, int count);
 // Trims whitespace in-place (modifies the buffer)
 char* nu_str_trim(char *str);
 
-typedef struct nu_loop nu_loop_t;
 typedef void (*nu_event_cb)(int fd, void *data);
 
 nu_loop_t* nu_loop_create(void);
