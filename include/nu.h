@@ -413,6 +413,29 @@ bool      nu_span_eq_span(nu_span_t span1, nu_span_t span2);
 nu_span_t nu_span_trim(nu_span_t span);
 nu_span_t nu_span_split_next(nu_span_t *span, char delim);
 
+typedef enum {
+    NU_FIBER_READY,
+    NU_FIBER_RUNNING,
+    NU_FIBER_DEAD
+} nu_fiber_state_t;
+
+typedef struct nu_fiber {
+    ucontext_t ctx;                 // OS-independent C context structure
+    void *stack;                    // Allocated stack memory
+    nu_fiber_state_t state;
+    void (*entry)(void *);          // Target function
+    void *arg;                      // Argument
+    struct nu_fiber *next;
+} nu_fiber_t;
+
+typedef struct {
+    nu_fiber_t *current;
+    nu_fiber_t *idle;               // Main thread context
+    nu_fiber_t *run_queue;
+    nu_fiber_t *run_queue_tail;
+} nu_scheduler_t;
+
+
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
 char** nu_str_split(const char *str, const char *delim, int *out_count);
 void   nu_str_free_list(char **list, int count);
