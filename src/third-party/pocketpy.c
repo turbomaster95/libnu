@@ -29267,7 +29267,11 @@ void pk__add_module_unicodedata() {
     py_bindfunc(mod, "east_asian_width", unicodedata_east_asian_width);
 }
 // src/modules/time.c
+
+#ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 700
+#endif
+
 #include <time.h>
 #undef _XOPEN_SOURCE
 

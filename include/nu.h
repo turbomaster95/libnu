@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <ucontext.h>
 
 /* JSON Node Type Variant IDs */
 #define NU_AST_JSON_NULL    100
