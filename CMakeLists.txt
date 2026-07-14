@@ -48,6 +48,7 @@ set(LIB_SOURCES
 	src/py.c
 	src/third-party/pocketpy.c
 	src/buf.c
+	src/strsp.c
 )
 
 # Build both Dynamic (.so) and Static (.a) libraries
