@@ -170,9 +170,9 @@ int main(int argc, char **argv) {
     // Dynamic out-of-tree adjustments for includes:
     fprintf(ninja, "includes = -I%s/include -Ibuild/ %s\n\n", src_dir, includes);
 
-    fprintf(ninja, "rule compile\n  command = $cc $cflags $includes -c $in -o $out\ndescription = Compiling $TARGET_FILE\n\n");
-    fprintf(ninja, "rule link_shared\n  command = $cc -shared -o $out $in\ndescription = Linking C shared library $TARGET_FILE\n");
-    fprintf(ninja, "rule link_static\n  command = ar rcs $out $in\ndescription = Linking C static library $TARGET_FILE\n");
+    fprintf(ninja, "rule compile\n  command = $cc $cflags $includes -c $in -o $out\n  description = Compiling $out\n\n");
+    fprintf(ninja, "rule link_shared\n  command = $cc -shared -o $out $in\n  description = Linking C shared library $out\n");
+    fprintf(ninja, "rule link_static\n  command = ar rcs $out $in\n  description = Linking C static library $out\n");
 
     char object_files_list[1024] = "";
     char *obj_ptr = object_files_list;
@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
             get_obj_name(src_file, obj_file, sizeof(obj_file));
 
             // Map back to the absolute/relative source tree directory
-            fprintf(ninja, "build %s: compile %s/%s\n  TARGET_FILE = %s\n", obj_file, src_dir, src_file, obj_file);
+            fprintf(ninja, "build %s: compile %s/%s\n\n", obj_file, src_dir, src_file);
 
             int written = snprintf(obj_ptr, remaining, "%s ", obj_file);
             if (written > 0 && (size_t)written < remaining) {
@@ -199,8 +199,8 @@ int main(int argc, char **argv) {
 
     char *trimmed_obj_list = trim_space(object_files_list);
 
-    fprintf(ninja, "\nbuild build/%s: link_shared %s\n  TARGET_FILE = %s\n", target_so, trimmed_obj_list, target_so);
-    fprintf(ninja, "build build/%s: link_static %s\n TARGET_FILE = %s\n", target_a, trimmed_obj_list, target_a);
+    fprintf(ninja, "\nbuild build/%s: link_shared %s\n\n", target_so, trimmed_obj_list);
+    fprintf(ninja, "build build/%s: link_static %s\n\n", target_a, trimmed_obj_list);
     fprintf(ninja, "default build/%s build/%s\n", target_so, target_a);
 
     fclose(ninja);

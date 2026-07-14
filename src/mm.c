@@ -1,5 +1,6 @@
 #include <nu.h>
 #include <stdint.h>
+#include <string.h>
 
 typedef struct nu_slob_node {
     size_t size;
@@ -238,3 +239,74 @@ void nu_free(nu_mm_t *mm, void *ptr) {
         }
     }
 }
+
+void* nu_realloc(nu_mm_t *mm, void *ptr, size_t size) {
+    if (!mm) {
+        return NULL;
+    }
+    if (!ptr) {
+        return nu_alloc(mm, size);
+    }
+    if (size == 0) {
+        nu_free(mm, ptr);
+        return NULL;
+    }
+
+    // Determine the original size of the allocated block
+    size_t old_size = 0;
+
+    if (mm->type == NU_MM_SLOB) {
+        nu_slob_node_t *node = (nu_slob_node_t *)((uint8_t *)ptr - sizeof(nu_slob_node_t));
+        old_size = node->size;
+    } 
+    else if (mm->type == NU_MM_BUDDY) {
+        nu_buddy_node_t *node = (nu_buddy_node_t *)((uint8_t *)ptr - sizeof(nu_buddy_node_t));
+        old_size = node->size - sizeof(nu_buddy_node_t);
+    } 
+    else if (mm->type == NU_MM_SLAB) {
+        uint8_t *uptr = (uint8_t *)ptr;
+        int idx = -1;
+        for (int i = 0; i < 4; i++) {
+            if (uptr >= mm->slab_regions[i] && uptr < mm->slab_regions[i] + mm->slab_region_size) {
+                idx = i;
+                break;
+            }
+        }
+        if (idx != -1) {
+            old_size = mm->slab_sizes[idx];
+        } else {
+            return NULL; // Pointer wasn't within any valid slab region
+        }
+    } 
+    else if (mm->type == NU_MM_ARENA) {
+        size_t aligned_size = (size + 7) & ~7;
+        uint8_t *uptr = (uint8_t *)ptr;
+        if (uptr + ((mm->arena_offset - (size_t)(uptr - mm->pool_start))) == mm->pool_start + mm->arena_offset) {
+            size_t current_alloc_size = (mm->pool_start + mm->arena_offset) - uptr;
+            size_t base_offset = uptr - mm->pool_start;
+            if (base_offset + aligned_size <= mm->pool_size) {
+                mm->arena_offset = base_offset + aligned_size;
+                return ptr;
+            }
+        }
+        old_size = size; 
+    }
+
+    if (size <= old_size) {
+        return ptr;
+    }
+
+    // Allocate new block
+    void *new_ptr = nu_alloc(mm, size);
+    if (!new_ptr) {
+        return NULL; // Keep original block intact on allocation failure
+    }
+
+    size_t copy_size = (old_size < size) ? old_size : size;
+    memcpy(new_ptr, ptr, copy_size);
+
+    nu_free(mm, ptr);
+
+    return new_ptr;
+}
+

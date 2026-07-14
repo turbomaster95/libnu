@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.12)
 project(libnu C)
 
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -O2 -g -Wno-unused-function -I${CMAKE_CURRENT_BINARY_DIR}/include -Wno-unused-parameter -Wno-unused-label -lm")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O1 -g -Wno-unused-function -I${CMAKE_CURRENT_BINARY_DIR}/include -Wno-unused -DNDEBUG")
 
 include(CheckIncludeFile)
 include(CheckFunctionExists)
@@ -45,6 +45,9 @@ set(LIB_SOURCES
 	src/print.c
 	src/argpars.c
 	src/lua.c
+	src/py.c
+	src/third-party/pocketpy.c
+	src/buf.c
 )
 
 # Build both Dynamic (.so) and Static (.a) libraries

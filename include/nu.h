@@ -1,5 +1,5 @@
-#ifndef LIBNU_H
-#define LIBNU_H
+#ifndef NU_H
+#define NU_H
 
 #include <stddef.h>
 #include <stdarg.h>
@@ -59,9 +59,10 @@ nu_mm_t* nu_mm_create(nu_mm_type_t type, void *backing_mem, size_t size);
 // Destroys a nu_mm instance
 void nu_mm_destroy(nu_mm_t *mm);
 
-// Alloc and Free for a specific instance.
+// Alloc, Free and Realloc for a specific instance.
 void* nu_alloc(nu_mm_t *mm, size_t size);
 void  nu_free(nu_mm_t *mm, void *ptr);
+void* nu_realloc(nu_mm_t *mm, void *ptr, size_t size);
 
 typedef struct nu_map nu_map_t;
 
@@ -384,6 +385,21 @@ void        nu_py_push_float(nu_py_t *ctx, double val);
 void        nu_py_push_str(nu_py_t *ctx, const char *str);
 void        nu_py_push_bool(nu_py_t *ctx, bool val);
 
+typedef struct {
+    nu_mm_t *mm;
+    uint8_t *data;
+    size_t size;
+    size_t capacity;
+} nu_buf_t;
+
+// Buffer things
+void   nu_buf_init(nu_buf_t *buf, nu_mm_t *mm, size_t initial_cap);
+void   nu_buf_reserve(nu_buf_t *buf, size_t new_cap);
+void   nu_buf_append(nu_buf_t *buf, const void *data, size_t len);
+void   nu_buf_append_val(nu_buf_t *buf, uint8_t byte);
+void   nu_buf_reset(nu_buf_t *buf);
+void   nu_buf_free(nu_buf_t *buf);
+
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
 char** nu_str_split(const char *str, const char *delim, int *out_count);
 void   nu_str_free_list(char **list, int count);
@@ -427,4 +443,4 @@ bool nu_process_spawn(nu_loop_t *loop, char *const argv[], nu_proc_io_cb stdout_
 // Daemonize easily
 bool nu_daemonize(void);
 
-#endif // LIBNU_H
+#endif // NU_H
