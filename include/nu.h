@@ -400,6 +400,19 @@ void   nu_buf_append_val(nu_buf_t *buf, uint8_t byte);
 void   nu_buf_reset(nu_buf_t *buf);
 void   nu_buf_free(nu_buf_t *buf);
 
+typedef struct {
+    const char *ptr;
+    size_t len;
+} nu_span_t;
+
+// String Span functions
+nu_span_t nu_span_from_str(const char *str);
+nu_span_t nu_span_from_parts(const char *ptr, size_t len);
+bool      nu_span_eq(nu_span_t span, const char *str);
+bool      nu_span_eq_span(nu_span_t span1, nu_span_t span2);
+nu_span_t nu_span_trim(nu_span_t span);
+nu_span_t nu_span_split_next(nu_span_t *span, char delim);
+
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
 char** nu_str_split(const char *str, const char *delim, int *out_count);
 void   nu_str_free_list(char **list, int count);
