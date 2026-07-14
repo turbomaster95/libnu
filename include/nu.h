@@ -325,6 +325,38 @@ void nu_arg_print_help(nu_arg_parser_t *ap, nu_arg_def_t defs[], size_t def_coun
 // Cleans up the argument parser allocations cleanly
 void nu_arg_destroy(nu_arg_parser_t *ap);
 
+struct nu_loop;
+typedef struct nu_loop nu_loop_t;
+
+typedef struct nu_lua nu_lua_t;
+
+// Instantiates a hidden Lua state.
+nu_lua_t* nu_lua_create(nu_mm_t *mm, nu_loop_t *loop);
+
+// Executes a raw script string. Returns false on syntax or execution errors.
+bool nu_lua_run_string(nu_lua_t *ctx, const char *script);
+
+// Decrypts an XTEA-encrypted script/bytecode chunk directly into memory and runs it.
+bool nu_lua_run_encrypted(nu_lua_t *ctx, const uint8_t *enc_data, size_t size, const uint32_t key[4]);
+
+// Registers a standard C function to be available inside the Lua environment.
+typedef int (*nu_lua_fn)(nu_lua_t *ctx);
+void nu_lua_register(nu_lua_t *ctx, const char *name, nu_lua_fn fn);
+
+// Lifecycle destruction
+void nu_lua_destroy(nu_lua_t *ctx);
+
+int         nu_lua_get_top(nu_lua_t *ctx);
+int64_t     nu_lua_to_int(nu_lua_t *ctx, int index);
+double      nu_lua_to_float(nu_lua_t *ctx, int index);
+const char* nu_lua_to_str(nu_lua_t *ctx, int index, size_t *out_len);
+bool        nu_lua_to_bool(nu_lua_t *ctx, int index);
+
+void        nu_lua_push_int(nu_lua_t *ctx, int64_t val);
+void        nu_lua_push_float(nu_lua_t *ctx, double val);
+void        nu_lua_push_str(nu_lua_t *ctx, const char *str);
+void        nu_lua_push_bool(nu_lua_t *ctx, bool val);
+
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
 char** nu_str_split(const char *str, const char *delim, int *out_count);
 void   nu_str_free_list(char **list, int count);

@@ -1,8 +1,8 @@
 [global]
 CC=gcc
-CFLAGS=-Wall -Wextra -O2 -std=gnu99 -fPIC -D_GNU_SOURCE -Wno-unused-parameter -Wno-unused-function -Wno-unused-label
+CFLAGS=-Wall -Wextra -O2 -std=gnu99 -fPIC -D_GNU_SOURCE -Wno-unused-parameter -Wno-unused-function -Wno-unused-label -lm
 INCLUDES=-Iinclude/ -Ibuild/
-SOURCES=src/main.c, src/proc.c, src/log.c, src/sig.c, src/mm.c, src/map.c, src/lex.c, src/ast.c, src/pratt.c, src/xtea.c, src/hash.c, src/hashes/md5.c, src/hashes/sha1.c, src/hashes/sha256.c, src/json.c, src/trie.c, src/lz4.c, src/time.c, src/print.c, src/argpars.c
+SOURCES=src/main.c, src/proc.c, src/log.c, src/sig.c, src/mm.c, src/map.c, src/lex.c, src/ast.c, src/pratt.c, src/xtea.c, src/hash.c, src/hashes/md5.c, src/hashes/sha1.c, src/hashes/sha256.c, src/json.c, src/trie.c, src/lz4.c, src/time.c, src/print.c, src/argpars.c, src/lua.c
 TARGET_SO=libnu.so
 TARGET_A=libnu.a
 

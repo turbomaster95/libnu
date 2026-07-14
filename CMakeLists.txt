@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -O2 -g -Wno-unused-function -I${CMAKE_CURRENT_BINARY_DIR}/include -Wno-unused-parameter -Wno-unused-label")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -O2 -g -Wno-unused-function -I${CMAKE_CURRENT_BINARY_DIR}/include -Wno-unused-parameter -Wno-unused-label -lm")
 
 include(CheckIncludeFile)
 include(CheckFunctionExists)
@@ -44,6 +44,7 @@ set(LIB_SOURCES
 	src/time.c
 	src/print.c
 	src/argpars.c
+	src/lua.c
 )
 
 # Build both Dynamic (.so) and Static (.a) libraries
