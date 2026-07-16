@@ -8,19 +8,14 @@
 
 #ifdef HAVE_SYS_EPOLL_H
   #include <sys/epoll.h>
-#else
-  #error "libnu requires epoll to build!"
 #endif
 
 #ifdef HAVE_SYS_INOTIFY_H
   #include <sys/inotify.h>
-#else
-  #error "libnu requires inotify to build!"
 #endif
 
-#include <sys/timerfd.h>
-#ifndef HAVE_TIMERFD_CREATE
-   #error "libnu needs timerfd_create to build!"
+#ifdef HAVE_TIMERFD_CREATE
+  #include <sys/timerfd.h>
 #endif
 
 #include <sys/socket.h>
@@ -74,6 +69,9 @@ char* nu_str_trim(char *str) {
     return str;
 }
 
+
+#if defined(HAVE_SYS_EPOLL_H)
+
 nu_loop_t* nu_loop_create(void) {
     nu_loop_t *loop = malloc(sizeof(nu_loop_t));
     if (!loop) return NULL;
@@ -85,7 +83,7 @@ nu_loop_t* nu_loop_create(void) {
 
 void nu_loop_destroy(nu_loop_t *loop) {
     if (!loop) return;
-    close(loop->epoll_fd);
+    if (loop->epoll_fd >= 0) close(loop->epoll_fd);
     if (loop->inotify_fd >= 0) close(loop->inotify_fd);
     for (int i = 0; i < loop->item_count; i++) free(loop->items[i]);
     free(loop);
@@ -95,6 +93,7 @@ bool nu_loop_add_fd(nu_loop_t *loop, int fd, nu_event_cb cb, void *data) {
     if (loop->item_count >= MAX_EVENTS) return false;
     
     nu_item_t *item = malloc(sizeof(nu_item_t));
+    if (!item) return false;
     item->fd = fd; item->cb = cb; item->data = data; item->is_inotify = false;
     
     struct epoll_event ev = { .events = EPOLLIN, .data.ptr = item };
@@ -105,6 +104,19 @@ bool nu_loop_add_fd(nu_loop_t *loop, int fd, nu_event_cb cb, void *data) {
     loop->items[loop->item_count++] = item;
     return true;
 }
+
+#else
+
+nu_loop_t* nu_loop_create(void) { return NULL; }
+void nu_loop_destroy(nu_loop_t *loop) { (void)loop; }
+bool nu_loop_add_fd(nu_loop_t *loop, int fd, nu_event_cb cb, void *data) {
+    (void)loop; (void)fd; (void)cb; (void)data;
+    return false;
+}
+
+#endif /* HAVE_SYS_EPOLL_H */
+
+#if defined(HAVE_SYS_EPOLL_H) && defined(HAVE_TIMERFD_CREATE)
 
 bool nu_loop_add_timer(nu_loop_t *loop, int ms, nu_event_cb cb, void *data) {
     int tfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
@@ -118,13 +130,23 @@ bool nu_loop_add_timer(nu_loop_t *loop, int ms, nu_event_cb cb, void *data) {
     return nu_loop_add_fd(loop, tfd, cb, data);
 }
 
+#else
+
+bool nu_loop_add_timer(nu_loop_t *loop, int ms, nu_event_cb cb, void *data) {
+    (void)loop; (void)ms; (void)cb; (void)data;
+    return false;
+}
+
+#endif
+
+#if defined(HAVE_SYS_EPOLL_H) && defined(HAVE_SYS_INOTIFY_H)
+
 static void internal_inotify_handler(int fd, void *data) {
     nu_item_t *watch_item = (nu_item_t*)data;
     char buffer[4096] __attribute__ ((aligned(__alignof__(struct inotify_event))));
     ssize_t len = read(fd, buffer, sizeof(buffer));
     if (len <= 0) return;
     
-    // Trigger consumer callback
     watch_item->cb(fd, watch_item->data);
 }
 
@@ -132,9 +154,11 @@ bool nu_loop_add_watch(nu_loop_t *loop, const char *path, nu_event_cb cb, void *
     if (loop->inotify_fd < 0) {
         loop->inotify_fd = inotify_init1(IN_NONBLOCK);
         if (loop->inotify_fd < 0) return false;
-        // Watch the inotify file descriptor inside epoll
+        
         nu_item_t *i_item = malloc(sizeof(nu_item_t));
+        if (!i_item) return false;
         i_item->fd = loop->inotify_fd; i_item->cb = internal_inotify_handler; i_item->data = NULL;
+        
         struct epoll_event ev = { .events = EPOLLIN, .data.ptr = i_item };
         epoll_ctl(loop->epoll_fd, EPOLL_CTL_ADD, loop->inotify_fd, &ev);
     }
@@ -142,14 +166,24 @@ bool nu_loop_add_watch(nu_loop_t *loop, const char *path, nu_event_cb cb, void *
     int wd = inotify_add_watch(loop->inotify_fd, path, IN_MODIFY);
     if (wd < 0) return false;
     
-    // Route notifications to user callback setup
     nu_item_t *user_item = malloc(sizeof(nu_item_t));
+    if (!user_item) return false;
     user_item->fd = wd; user_item->cb = cb; user_item->data = data; user_item->is_inotify = true;
     
-    // Attach custom event logic directly via internal lookup structures
     loop->items[loop->item_count++] = user_item;
     return true;
 }
+
+#else
+
+bool nu_loop_add_watch(nu_loop_t *loop, const char *path, nu_event_cb cb, void *data) {
+    (void)loop; (void)path; (void)cb; (void)data;
+    return false;
+}
+
+#endif
+
+#if defined(HAVE_SYS_EPOLL_H)
 
 bool nu_loop_run(nu_loop_t *loop) {
     struct epoll_event events[MAX_EVENTS];
@@ -161,8 +195,9 @@ bool nu_loop_run(nu_loop_t *loop) {
         }
         for (int i = 0; i < nfds; i++) {
             nu_item_t *item = (nu_item_t*)events[i].data.ptr;
+            
+#if defined(HAVE_SYS_INOTIFY_H)
             if (item->fd == loop->inotify_fd) {
-                // Handle inotify multiplexed streams
                 char buf[4096];
                 ssize_t len = read(item->fd, buf, sizeof(buf));
                 if (len > 0) {
@@ -173,18 +208,30 @@ bool nu_loop_run(nu_loop_t *loop) {
                         }
                     }
                 }
-            } else {
-                if (item->cb) {
-                    // Consume timerfd tokens to avoid looping indefinitely
-                    uint64_t missed;
-                    read(item->fd, &missed, sizeof(missed)); 
-                    item->cb(item->fd, item->data);
-                }
+                continue;
+            }
+#endif
+            
+            if (item->cb) {
+#if defined(HAVE_TIMERFD_CREATE)
+                uint64_t missed;
+                read(item->fd, &missed, sizeof(missed)); 
+#endif
+                item->cb(item->fd, item->data);
             }
         }
     }
     return true;
 }
+
+#else
+
+bool nu_loop_run(nu_loop_t *loop) {
+    (void)loop;
+    return false;
+}
+
+#endif /* HAVE_SYS_EPOLL_H */
 
 void nu_ipc_listen(const char *sock_path, nu_ipc_cb cb, void *data) {
     int server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -237,6 +284,10 @@ char* nu_ipc_send(const char *sock_path, const char *message) {
     write(sock, message, strlen(message));
     
     char *response = malloc(2048);
+    if (!response) {
+        close(sock);
+        return NULL;
+    }
     memset(response, 0, 2048);
     ssize_t n = read(sock, response, 2047);
     close(sock);
