@@ -55,6 +55,7 @@ set(LIB_SOURCES
 	src/strsp.c
 	src/std/string.c
 	src/std/stdlib.c
+	src/calc.c
 )
 
 set(NU_TARGETS "")

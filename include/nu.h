@@ -441,6 +441,52 @@ typedef struct {
 } nu_scheduler_t;
 
 
+// 128-bit check
+#if defined(__SIZEOF_INT128__)
+    typedef __uint128_t nu_u128;
+    #define NU_HAS_NATIVE_U128 1
+#else
+    typedef struct {
+        uint64_t low;
+        uint64_t high;
+    } nu_u128;
+    #define NU_HAS_NATIVE_U128 0
+#endif
+
+// 256-bit C23 check
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L) && defined(__BITINT_MAXWIDTH__) && (__BITINT_MAXWIDTH__ >= 256)
+    typedef unsigned _BitInt(256) nu_u256;
+    #define NU_HAS_NATIVE_U256 1
+#else
+    // Fallback for systems without 256-bit integer limits
+    typedef struct {
+        uint64_t limbs[4];
+    } nu_u256;
+    #define NU_HAS_NATIVE_U256 0
+#endif
+
+typedef enum {
+    NU_PREC_64,
+    NU_PREC_128,
+    NU_PREC_256
+} nu_prec_type_t;
+
+typedef struct {
+    nu_prec_type_t type;
+    union {
+        uint64_t v64;
+        nu_u128  v128;
+        nu_u256  v256;
+    } data;
+} nu_calc_t;
+
+nu_calc_t nu_calc_from_u64(uint64_t val);
+nu_calc_t nu_calc_from_str(const char *str, int base);
+nu_calc_t nu_calc_add(nu_calc_t a, nu_calc_t b);
+nu_calc_t nu_calc_sub(nu_calc_t a, nu_calc_t b);
+nu_calc_t nu_calc_mul(nu_calc_t a, nu_calc_t b);
+void nu_calc_print(nu_calc_t val);
+
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
 char** nu_str_split(const char *str, const char *delim, int *out_count);
 void   nu_str_free_list(char **list, int count);
