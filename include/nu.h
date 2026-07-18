@@ -5,6 +5,8 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
+
+#define _XOPEN_SOURCE 700
 #include <ucontext.h>
 
 /* JSON Node Type Variant IDs */
