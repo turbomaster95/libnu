@@ -2,10 +2,23 @@
 #include <stdint.h>
 #include <nus.h>
 
+static char g_arena[ARENA_SIZE];
+static size_t g_arena_offset = 0;
+
 size_t nu_strlen(const char *s) {
     const char *a = s;
     while (*s) s++;
     return s - a;
+}
+
+char *nu_strlcpy(char *dest, const char *src, size_t n) {
+    if (n == 0) return dest;
+    size_t i;
+    for (i = 0; i < n - 1 && src[i] != '\0'; i++) {
+        dest[i] = src[i];
+    }
+    dest[i] = '\0';
+    return dest;
 }
 
 size_t nu_strnlen(const char *s, size_t maxlen) {
@@ -100,4 +113,16 @@ char *nu_strstr(const char *haystack, const char *needle) {
         }
     }
     return NULL;
+}
+
+char *nu_strdup(const char *s) {
+    size_t len = nu_strlen(s) + 1;
+
+    if (g_arena_offset + len > ARENA_SIZE) {
+        return NULL;
+    }
+    char *dest = &g_arena[g_arena_offset];
+    nu_strlcpy(dest, s, len);
+    g_arena_offset += len;
+    return dest;
 }

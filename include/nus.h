@@ -41,7 +41,11 @@ static inline int nu_tolower(int c) {
 
 #line 1 "nu_string.h"
 
+#define ARENA_SIZE 65536 // Sets the small arena for strdup
+
+char *nu_strdup(const char *s);
 size_t nu_strlen(const char *s);
+char *nu_strlcpy(char *dest, const char *src, size_t n);
 size_t nu_strnlen(const char *s, size_t maxlen);
 int nu_strcmp(const char *s1, const char *s2);
 int nu_strncmp(const char *s1, const char *s2, size_t n);
