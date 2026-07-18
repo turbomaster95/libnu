@@ -6,7 +6,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 700
+#endif
 #include <ucontext.h>
 
 /* JSON Node Type Variant IDs */
