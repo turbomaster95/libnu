@@ -36,7 +36,7 @@ void get_obj_name(const char *src, char *obj, size_t max_len) {
     } else {
         base = src;
     }
-    snprintf(obj, max_len, "build/obj/%s", base);
+    snprintf(obj, max_len, "obj/%s", base);
     char *dot = strrchr(obj, '.');
     if (dot) {
         strcpy(dot, ".o");
@@ -211,9 +211,9 @@ int main(int argc, char **argv) {
     char *trimmed_obj_list = trim_space(object_files_list);
 
     fprintf(ninja, "\n# Build shared and static versions of the library\n");
-    fprintf(ninja, "build build/%s: link_shared %s\n", target_so, trimmed_obj_list);
-    fprintf(ninja, "build build/%s: link_static %s\n\n", target_a, trimmed_obj_list);
-    fprintf(ninja, "default build/%s build/%s\n", target_so, target_a);
+    fprintf(ninja, "build %s: link_shared %s\n", target_so, trimmed_obj_list);
+    fprintf(ninja, "build %s: link_static %s\n\n", target_a, trimmed_obj_list);
+    fprintf(ninja, "default %s %s\n", target_so, target_a);
 
     fclose(ninja);
     return 0;

@@ -541,7 +541,7 @@ char* nu_ipc_send(nu_mm_t *mm, const char *sock_path, const char *message);
 bool nu_loop_add_signal(nu_loop_t *loop, nu_mm_t *mm, int signum, nu_event_cb cb, void *data);
 
 // Exec background processes without hanging. Pipeline matches standard argv format.
-bool nu_process_spawn(nu_loop_t *loop, char *const argv[], nu_proc_io_cb stdout_cb, void *data);
+bool nu_process_spawn(nu_loop_t *loop, nu_mm_t *mm, char *const argv[], nu_proc_io_cb stdout_cb, void *data);
 
 // Daemonize easily
 bool nu_daemonize(void);

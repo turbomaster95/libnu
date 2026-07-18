@@ -31,7 +31,7 @@ static void internal_proc_handler(int fd, void *data) {
     }
 }
 
-bool nu_process_spawn(nu_loop_t *loop, char *const argv[], nu_proc_io_cb stdout_cb, void *data) {
+bool nu_process_spawn(nu_loop_t *loop, nu_mm_t *mm, char *const argv[], nu_proc_io_cb stdout_cb, void *data) {
     int p_fds[2];
     if (pipe(p_fds) < 0) return false;
 
@@ -61,7 +61,7 @@ bool nu_process_spawn(nu_loop_t *loop, char *const argv[], nu_proc_io_cb stdout_
     wrapper->io_cb = stdout_cb;
     wrapper->user_data = data;
 
-    return nu_loop_add_fd(loop, p_fds[0], internal_proc_handler, wrapper);
+    return nu_loop_add_fd(loop, mm, p_fds[0], internal_proc_handler, wrapper);
 }
 
 bool nu_daemonize(void) {

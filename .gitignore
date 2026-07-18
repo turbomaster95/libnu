@@ -10,3 +10,5 @@
 configure
 build/
 
+# DONT Ignore these files
+!.clangd

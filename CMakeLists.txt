@@ -27,6 +27,11 @@ configure_file(
 include_directories(include "${CMAKE_CURRENT_BINARY_DIR}")
 
 set(LIB_SOURCES
+  src/main.c
+  src/mm/arena.c
+  src/mm/buddy.c
+  src/mm/slab.c
+  src/mm/slob.c
 	src/ipc.c
 	src/loop.c
 	src/str.c
