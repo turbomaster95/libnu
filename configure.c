@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
 
     char cc[64] = "gcc";
     char cflags[256] = "-Wall -O2 -fPIC";
-    char includes[256] = "-I./include -I.";
+    char includes[256] = "-Iinclude";
     char lib_src_raw[512] = "src/main.c";
     char target_so[64] = "libnu.so";
     char target_a[64] = "libnu.a";
@@ -116,6 +116,9 @@ int main(int argc, char **argv) {
     printf("--- Configuring libnu ---\n");
 
     system("mkdir -p build/obj/");
+    system("rm -f build/src build/include");
+    system("ln -s ../src build/src");
+    system("ln -s ../include build/include");
 
     FILE *config_h = fopen("build/config.h", "w");
     if (!config_h) return 1;
@@ -160,20 +163,28 @@ int main(int argc, char **argv) {
     fprintf(config_h, "\n#endif\n");
     fclose(config_h);
 
+    FILE *rules = fopen("build/rules.ninja", "w");
+    if (!rules) return EXIT_FAILURE;
+    
+    fprintf(rules, "# Predefined rules for build.ninja\n\n");
+    fprintf(rules, "builddir = build\n");
+    fprintf(rules, "cc = %s\n", cc);
+    fprintf(rules, "cflags = %s\n", cflags);
+    // Dynamic out-of-tree adjustments for includes:
+    fprintf(rules, "includes = -I%s %s\n\n", src_dir, includes);
+
+    fprintf(rules, "rule compile\n  command = $cc $cflags $includes -c $in -o $out\n  description = Compiling $out\n\n");
+    fprintf(rules, "rule link_shared\n  command = $cc -shared -o $out $in\n  description = Linking C shared library $out\n\n");
+    fprintf(rules, "rule link_static\n  command = ar rcs $out $in\n  description = Linking C static library $out\n\n");
+
+    fclose(rules);
+    
     FILE *ninja = fopen("build/build.ninja", "w");
     if (!ninja) return 1;
 
     fprintf(ninja, "# Generated dynamically by configure.c\n\n");
-    fprintf(ninja, "builddir = build\n");
-    fprintf(ninja, "cc = %s\n", cc);
-    fprintf(ninja, "cflags = %s\n", cflags);
-    // Dynamic out-of-tree adjustments for includes:
-    fprintf(ninja, "includes = -I%s/include -Ibuild/ %s\n\n", src_dir, includes);
-
-    fprintf(ninja, "rule compile\n  command = $cc $cflags $includes -c $in -o $out\n  description = Compiling $out\n\n");
-    fprintf(ninja, "rule link_shared\n  command = $cc -shared -o $out $in\n  description = Linking C shared library $out\n");
-    fprintf(ninja, "rule link_static\n  command = ar rcs $out $in\n  description = Linking C static library $out\n");
-
+    fprintf(ninja, "include ./rules.ninja\n");
+    fprintf(ninja, "# Files to be built\n");
     char object_files_list[1024] = "";
     char *obj_ptr = object_files_list;
     size_t remaining = sizeof(object_files_list);
@@ -186,7 +197,7 @@ int main(int argc, char **argv) {
             get_obj_name(src_file, obj_file, sizeof(obj_file));
 
             // Map back to the absolute/relative source tree directory
-            fprintf(ninja, "build %s: compile %s/%s\n\n", obj_file, src_dir, src_file);
+            fprintf(ninja, "build %s: compile %s/%s\n", obj_file, src_dir, src_file);
 
             int written = snprintf(obj_ptr, remaining, "%s ", obj_file);
             if (written > 0 && (size_t)written < remaining) {
@@ -199,7 +210,8 @@ int main(int argc, char **argv) {
 
     char *trimmed_obj_list = trim_space(object_files_list);
 
-    fprintf(ninja, "\nbuild build/%s: link_shared %s\n\n", target_so, trimmed_obj_list);
+    fprintf(ninja, "\n# Build shared and static versions of the library\n");
+    fprintf(ninja, "build build/%s: link_shared %s\n", target_so, trimmed_obj_list);
     fprintf(ninja, "build build/%s: link_static %s\n\n", target_a, trimmed_obj_list);
     fprintf(ninja, "default build/%s build/%s\n", target_so, target_a);
 

@@ -2,7 +2,6 @@
 #define NU_INTERNAL_H
 
 #include <nu.h>
-#include <sys/epoll.h>
 #include <stdbool.h>
 
 #define MAX_EVENTS 64
@@ -10,20 +9,6 @@
 #define ROL32(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
 #define ROR32(x, n) (((x) >> (n)) | ((x) << (32 - (n))))
 #define SHR(x, n)   ((x) >> (n))
-
-typedef struct {
-    int fd;
-    nu_event_cb cb;
-    void *data;
-    bool is_inotify;
-} nu_item_t;
-
-struct nu_loop {
-    int epoll_fd;
-    int inotify_fd;
-    nu_item_t *items[MAX_EVENTS];
-    int item_count;
-};
 
 static char* nu_digest_to_hex(nu_mm_t *mm, const uint8_t *digest, size_t len) {
     char *hex = (char *)nu_alloc(mm, (len * 2) + 1);

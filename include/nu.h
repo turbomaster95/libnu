@@ -331,7 +331,12 @@ void nu_arg_print_help(nu_arg_parser_t *ap, nu_arg_def_t defs[], size_t def_coun
 // Cleans up the argument parser allocations cleanly
 void nu_arg_destroy(nu_arg_parser_t *ap);
 
-struct nu_loop;
+struct nu_loop {
+    int epoll_fd;
+    int inotify_fd;
+    nu_map_t *items_map;
+};
+
 typedef struct nu_loop nu_loop_t;
 
 typedef struct nu_lua nu_lua_t;
@@ -440,6 +445,10 @@ typedef struct {
     nu_fiber_t *run_queue_tail;
 } nu_scheduler_t;
 
+void nu_sched_init(nu_mm_t* mm);
+void nu_fiber_create(nu_mm_t* mm, void (*entry)(void *), void *arg);
+void nu_yield(void);
+void nu_sched_run(void);
 
 // 128-bit check
 #if defined(__SIZEOF_INT128__)
@@ -496,33 +505,40 @@ char* nu_str_trim(char *str);
 
 typedef void (*nu_event_cb)(int fd, void *data);
 
-nu_loop_t* nu_loop_create(void);
-void       nu_loop_destroy(nu_loop_t *loop);
+nu_loop_t* nu_loop_create(nu_mm_t *mm);
+void       nu_loop_destroy(nu_loop_t *loop, nu_mm_t *mm);
 
 // Add a standard file descriptor to watch for readability
-bool       nu_loop_add_fd(nu_loop_t *loop, int fd, nu_event_cb cb, void *data);
+bool       nu_loop_add_fd(nu_loop_t *loop, nu_mm_t *mm, int fd, nu_event_cb cb, void *data);
 
 // Add a timer (interval in milliseconds)
-bool       nu_loop_add_timer(nu_loop_t *loop, int ms, nu_event_cb cb, void *data);
+bool       nu_loop_add_timer(nu_loop_t *loop, nu_mm_t *mm, int ms, nu_event_cb cb, void *data);
 
 // Watch a file/directory path for modifications
-bool       nu_loop_add_watch(nu_loop_t *loop, const char *path, nu_event_cb cb, void *data);
+bool       nu_loop_add_watch(nu_loop_t *loop, nu_mm_t *mm, const char *path, nu_event_cb cb, void *data);
 
 // Run the loop indefinitely. Returns false on catastrophic failure.
 bool       nu_loop_run(nu_loop_t *loop);
 
 typedef void (*nu_ipc_cb)(const char *msg, int client_fd, void *data);
 
+typedef struct {
+    int fd;
+    nu_event_cb cb;
+    void *data;
+    bool is_inotify;
+} nu_item_t;
+
 // Starts a blocking IPC server. Typically spawned in its own thread or used as a standalone daemon.
 // Automatically creates a UNIX socket at 'sock_path'.
-void       nu_ipc_listen(const char *sock_path, nu_ipc_cb cb, void *data);
+void nu_ipc_listen(nu_mm_t *mm, const char *sock_path, nu_ipc_cb cb, void *data);
 
 // Sends a quick message to a listening IPC server and returns response (or NULL)
-char* nu_ipc_send(const char *sock_path, const char *message);
+char* nu_ipc_send(nu_mm_t *mm, const char *sock_path, const char *message);
 
 // Mask and monitor system signals via epoll loop.
 // Pass signum (e.g., SIGINT, SIGTERM). Returns false on failure.
-bool nu_loop_add_signal(nu_loop_t *loop, int signum, nu_event_cb cb, void *data);
+bool nu_loop_add_signal(nu_loop_t *loop, nu_mm_t *mm, int signum, nu_event_cb cb, void *data);
 
 // Exec background processes without hanging. Pipeline matches standard argv format.
 bool nu_process_spawn(nu_loop_t *loop, char *const argv[], nu_proc_io_cb stdout_cb, void *data);
