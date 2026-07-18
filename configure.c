@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
     // Dynamic out-of-tree adjustments for includes:
     fprintf(rules, "includes = -I%s %s\n\n", src_dir, includes);
 
-    fprintf(rules, "rule compile\n  command = $cc $cflags $includes -c $in -o $out\n  description = Compiling $out\n\n");
+    fprintf(rules, "rule compile\n  command = $cc $cflags $includes -MF $out.d -c $in -o $out\n  depfile = $out.d\n  deps = gcc\n  description = Compiling $out\n\n");
     fprintf(rules, "rule link_shared\n  command = $cc -shared -o $out $in\n  description = Linking C shared library $out\n\n");
     fprintf(rules, "rule link_static\n  command = ar rcs $out $in\n  description = Linking C static library $out\n\n");
 
