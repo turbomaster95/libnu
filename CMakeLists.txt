@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 project(libnu C)
 
-
 option(NU_SHARED "Build shared Library." OFF)
 option(NU_STATIC "Build static Library." ON)
 
@@ -9,7 +8,7 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O1 -g -Wno-unused-function -I${CMAKE_CURRENT_BINARY_DIR}/include -Wno-unused -DNDEBUG -Wl,--gc-sections -ffunction-sections -fdata-sections")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused -O1 -g -Wno-unused-function -I${CMAKE_CURRENT_BINARY_DIR}/include -Wno-unused -DNDEBUG -Wl,--gc-sections -ffunction-sections -fdata-sections")
 
 include(CheckIncludeFile)
 include(CheckFunctionExists)
