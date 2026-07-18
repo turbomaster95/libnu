@@ -184,3 +184,40 @@ bool nu_map_delete(nu_map_t *map, const char *key) {
 size_t nu_map_size(nu_map_t *map) {
     return map ? map->size : 0;
 }
+
+bool nu_map_iter_init(nu_map_t *map, nu_map_iter_t *iter) {
+    if (!map || !iter) return false;
+    iter->map = map;
+    iter->bucket = 0;
+    iter->entry = NULL;
+    while (iter->bucket < map->capacity) {
+        if (map->entries[iter->bucket].is_occupied) {
+            iter->entry = &map->entries[iter->bucket];
+            return true;
+        }
+        iter->bucket++;
+    }
+    return false;
+}
+
+bool nu_map_iter_next(nu_map_iter_t *iter, const char **out_key, void **out_value) {
+    if (!iter || !iter->map) return false;
+    if (iter->entry) {
+        nu_map_entry_t *e = (nu_map_entry_t *)iter->entry;
+        if (out_key) *out_key = e->key;
+        if (out_value) *out_value = e->value;
+        iter->entry = NULL;
+    } else {
+        if (out_key) *out_key = NULL;
+        if (out_value) *out_value = NULL;
+    }
+    iter->bucket++;
+    while (iter->bucket < iter->map->capacity) {
+        if (iter->map->entries[iter->bucket].is_occupied) {
+            iter->entry = &iter->map->entries[iter->bucket];
+            return true;
+        }
+        iter->bucket++;
+    }
+    return iter->entry != NULL;
+}

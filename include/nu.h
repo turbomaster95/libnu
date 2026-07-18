@@ -71,6 +71,15 @@ void* nu_realloc(nu_mm_t *mm, void *ptr, size_t size);
 
 typedef struct nu_map nu_map_t;
 
+typedef struct { 
+	nu_map_t *map; 
+	size_t bucket; 
+	void *entry; 
+} nu_map_iter_t;
+
+bool nu_map_iter_init(nu_map_t *map, nu_map_iter_t *iter);
+bool nu_map_iter_next(nu_map_iter_t *iter, const char **out_key, void **out_value);
+
 // Creates a new hashmap using a specific allocator instance.
 // arg1: The backing memory manager instance to handle allocations.
 // arg2: Baseline slot count (must be a power of 2 for optimization).
