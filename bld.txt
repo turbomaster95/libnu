@@ -1,7 +1,7 @@
 [global]
 CC=gcc
-CFLAGS=-Wall -Wno-unused -O1 -std=gnu23 -fPIC -D_GNU_SOURCE -Wno-unused -DNDEBUG -fno-builtin -ffunction-sections -fdata-sections -Wl,--gc-sections -MMD -MP
-INCLUDES=-Iinclude/
+CFLAGS=-Wall -Wno-unused-command-line-argument -Wno-unused -O1 -std=gnu23 -fPIC -D_GNU_SOURCE -Wno-unused -DNDEBUG -fno-builtin -ffunction-sections -fdata-sections -Wl,--gc-sections -MMD -MP
+INCLUDES=-Iinclude/ -I.
 SOURCES=src/main.c, src/mm/arena.c, src/mm/buddy.c, src/mm/slob.c, src/mm/slab.c, src/ipc.c, src/loop.c, src/str.c, src/proc.c, src/log.c, src/sig.c, src/mm.c, src/map.c, src/lex.c, src/ast.c, src/pratt.c, src/xtea.c, src/hash.c, src/hashes/md5.c, src/hashes/sha1.c, src/hashes/sha256.c, src/json.c, src/trie.c, src/lz4.c, src/time.c, src/print.c, src/argpars.c, src/lua.c, src/py.c, src/third-party/pocketpy.c, src/buf.c, src/strsp.c, src/std/string.c, src/std/stdlib.c, src/calc.c
 TARGET_SO=libnu.so
 TARGET_A=libnu.a
