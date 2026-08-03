@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
-gcc -O2 configure.c -o configure
+set -e
+
+make -C reconf/lib/dmalloc
+
+cp reconf/lib/dmalloc/build/dmalloc.a reconf/
+gcc -Ireconf/include -fno-builtin -o reconf/reconf reconf/src/*.c reconf/dmalloc.a
+
+./reconf/reconf
 ./configure
-cd build
-ninja 
+
+ninja -C build

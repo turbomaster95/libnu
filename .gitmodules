@@ -1,0 +1,3 @@
+[submodule "reconf"]
+	path = reconf
+	url = https://github.com/turbomaster95/reconf
