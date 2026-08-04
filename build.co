@@ -1,13 +1,18 @@
 package libnu 0.1.0
 
-target_so libnu.so
-target_a  libnu.a
-
 set CC      ${CC:-gcc}
 set CFLAGS  -Wall -Wno-unused-command-line-argument -Wno-unused -O1 -std=gnu23 -fPIC -D_GNU_SOURCE -DNDEBUG -fno-builtin -ffunction-sections -fdata-sections -Wl,--gc-sections -MMD -MP
 INCLUDES    -Iinclude/ -I.
 
-sources \
+check_header HAVE_SYS_EPOLL_H   sys/epoll.h
+check_header HAVE_SYS_INOTIFY_H sys/inotify.h
+check_header HAVE_SYS_SIGNALFD_H sys/signalfd.h
+
+check_code HAVE_TIMERFD_CREATE "#include <sys/timerfd.h>\nint main(){ timerfd_create(0, 0); }"
+check_code HAVE_SIGNALFD       "#include <sys/signalfd.h>\n#include <signal.h>\nint main(){ sigset_t m; sigemptyset(&m); signalfd(-1, &m, 0); }"
+
+target_so libnu.so
+libnu.so - sources \
     src/main.c \
     src/mm/arena.c \
     src/mm/buddy.c \
@@ -44,9 +49,40 @@ sources \
     src/std/stdlib.c \
     src/calc.c
 
-check_header HAVE_SYS_EPOLL_H   sys/epoll.h
-check_header HAVE_SYS_INOTIFY_H sys/inotify.h
-check_header HAVE_SYS_SIGNALFD_H sys/signalfd.h
-
-check_code HAVE_TIMERFD_CREATE "#include <sys/timerfd.h>\nint main(){ timerfd_create(0, 0); }"
-check_code HAVE_SIGNALFD       "#include <sys/signalfd.h>\n#include <signal.h>\nint main(){ sigset_t m; sigemptyset(&m); signalfd(-1, &m, 0); }"
+target_a libnu.a
+libnu.a - sources \
+    src/main.c \
+    src/mm/arena.c \
+    src/mm/buddy.c \
+    src/mm/slob.c \
+    src/mm/slab.c \
+    src/ipc.c \
+    src/loop.c \
+    src/str.c \
+    src/proc.c \
+    src/log.c \
+    src/sig.c \
+    src/mm.c \
+    src/map.c \
+    src/lex.c \
+    src/ast.c \
+    src/pratt.c \
+    src/xtea.c \
+    src/hash.c \
+    src/hashes/md5.c \
+    src/hashes/sha1.c \
+    src/hashes/sha256.c \
+    src/json.c \
+    src/trie.c \
+    src/lz4.c \
+    src/time.c \
+    src/print.c \
+    src/argpars.c \
+    src/lua.c \
+    src/py.c \
+    src/third-party/pocketpy.c \
+    src/buf.c \
+    src/strsp.c \
+    src/std/string.c \
+    src/std/stdlib.c \
+    src/calc.c
