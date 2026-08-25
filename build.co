@@ -1,7 +1,7 @@
 package libnu 0.1.0
 
 set CC      ${CC:-gcc}
-set CFLAGS  -Wall -Wno-unused-command-line-argument -Wno-unused -O1 -std=gnu23 -fPIC -D_GNU_SOURCE -DNDEBUG -fno-builtin -ffunction-sections -fdata-sections -Wl,--gc-sections -MMD -MP
+set CFLAGS  -Wall -Wno-unused-command-line-argument -Wno-unused -O1 -std=gnu23 -fPIC -D_GNU_SOURCE -DNDEBUG -fno-builtin -ffunction-sections -fdata-sections -Wl,--gc-sections -MMD -MP -std=c23
 INCLUDES    -Iinclude/ -I.
 
 check_header HAVE_SYS_EPOLL_H   sys/epoll.h

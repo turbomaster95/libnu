@@ -4,7 +4,7 @@ project(libnu C)
 option(NU_SHARED "Build shared Library." OFF)
 option(NU_STATIC "Build static Library." ON)
 
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
