@@ -18,11 +18,11 @@ static void nu_fiber_bootstrap(void) {
     // swapcontext will be called inside nu_yield to move to the next fiber
     // and we never return here.
     nu_yield();
-    unreachable();
+    __builtin_unreachable();
 }
 
 void nu_sched_init(nu_mm_t* mm) {
-    if (!mm) { return NULL; }
+    if (!mm) { return; }
 
     memset(&sched, 0, sizeof(sched));
 
@@ -35,7 +35,7 @@ void nu_sched_init(nu_mm_t* mm) {
 }
 
 void nu_fiber_create(nu_mm_t* mm, void (*entry)(void *), void *arg) {
-    if (!mm) { return NULL; }
+    if (!mm) { return; }
 
     nu_fiber_t *fiber = nu_alloc(mm, sizeof(nu_fiber_t));
 
