@@ -2,6 +2,10 @@
 #include <time.h>
 #include <errno.h>
 
+#ifdef __wasi__
+#define CLOCK_MONOTONIC_RAW CLOCK_MONOTONIC
+#endif
+
 static inline uint64_t nu_timespec_to_ns(const struct timespec *ts) {
     return ((uint64_t)ts->tv_sec * 1000000000ULL) + (uint64_t)ts->tv_nsec;
 }

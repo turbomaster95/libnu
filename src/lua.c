@@ -1,3 +1,9 @@
+#if defined(__wasi__)
+  #define LUA_ANSI
+  #define LUAI_THROW(L,c) exit(1)
+  #define LUAI_TRY(L,c,a) a
+  typedef int jmp_buf;
+#endif
 #define LUA_IMPL
 #include <third-party/minilua.h>
 #include <nu.h>

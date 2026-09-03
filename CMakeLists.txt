@@ -17,6 +17,7 @@ check_include_file("sys/epoll.h" HAVE_SYS_EPOLL_H)
 check_include_file("sys/inotify.h" HAVE_SYS_INOTIFY_H)
 check_include_file("sys/signalfd.h" HAVE_SYS_SIGNALFD_H)
 check_include_file("ucontext.h" HAVE_UCONTEXT_H)
+check_include_file("sys/wait.h" HAVE_SYS_WAIT_H)
 check_function_exists(timerfd_create HAVE_TIMERFD_CREATE)
 check_function_exists(signalfd HAVE_SIGNALFD)
 
@@ -67,6 +68,10 @@ set(LIB_SOURCES
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Generic" OR WASI)
     list(REMOVE_ITEM LIB_SOURCES "src/ipc.c")
+    list(REMOVE_ITEM LIB_SOURCES "src/loop.c")
+    list(REMOVE_ITEM LIB_SOURCES "src/proc.c")
+    list(REMOVE_ITEM LIB_SOURCES "src/sig.c")
+    list(REMOVE_ITEM LIB_SOURCES "src/lua.c")
 endif()
 
 set(NU_TARGETS "")

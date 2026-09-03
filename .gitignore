@@ -10,6 +10,7 @@
 *.d
 configure
 build/
+build-*/
 
 # DONT Ignore these files
 !.clangd
