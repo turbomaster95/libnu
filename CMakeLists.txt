@@ -65,6 +65,10 @@ set(LIB_SOURCES
 	src/calc.c
 )
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Generic" OR WASI)
+    list(REMOVE_ITEM LIB_SOURCES "src/ipc.c")
+endif()
+
 set(NU_TARGETS "")
 
 if(NU_STATIC)
