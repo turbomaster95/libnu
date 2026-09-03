@@ -94,11 +94,6 @@ if(NU_SHARED)
     list(APPEND NU_TARGETS nu_shared)
 endif()
 
-if(NU_STATIC AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test1.c")
-    add_executable(test_tool tests/test1.c)
-    target_link_libraries(test_tool nu_static)
-endif()
-
 include(GNUInstallDirs)
 
 install(TARGETS ${NU_TARGETS}
