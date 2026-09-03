@@ -9,7 +9,9 @@
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 700
 #endif
+#ifdef HAVE_UCONTEXT_H
 #include <ucontext.h>
+#endif
 
 /* JSON Node Type Variant IDs */
 #define NU_AST_JSON_NULL    100
@@ -439,7 +441,9 @@ typedef enum {
 } nu_fiber_state_t;
 
 typedef struct nu_fiber {
+    #ifdef HAVE_UCONTEXT_H
     ucontext_t ctx;                 // OS-independent C context structure
+    #endif
     void *stack;                    // Allocated stack memory
     nu_fiber_state_t state;
     void (*entry)(void *);          // Target function
