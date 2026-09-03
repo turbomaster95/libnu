@@ -8,7 +8,7 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused -O1 -g -Wno-unused-function -I${CMAKE_CURRENT_BINARY_DIR}/include -Wno-unused -DNDEBUG -Wl,--gc-sections -ffunction-sections -fdata-sections")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused -O1 -g -Wno-unused-function -I${CMAKE_CURRENT_BINARY_DIR}/include -Wno-unused -DNDEBUG -Wl,--gc-sections -ffunction-sections -fdata-sections -fno-builtin -D_GNU_SOURCE")
 
 include(CheckIncludeFile)
 include(CheckFunctionExists)
@@ -16,6 +16,7 @@ include(CheckFunctionExists)
 check_include_file("sys/epoll.h" HAVE_SYS_EPOLL_H)
 check_include_file("sys/inotify.h" HAVE_SYS_INOTIFY_H)
 check_include_file("sys/signalfd.h" HAVE_SYS_SIGNALFD_H)
+check_include_file("ucontext.h" HAVE_UCONTEXT_H)
 check_function_exists(timerfd_create HAVE_TIMERFD_CREATE)
 check_function_exists(signalfd HAVE_SIGNALFD)
 
