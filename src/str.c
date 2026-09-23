@@ -1,17 +1,18 @@
 #include <nu.h>
+#include <nus.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
-char** nu_str_split(const char *str, const char *delim, int *out_count) {
-    char *s = strdup(str);
+char** nu_str_split(nu_mm_t *mm, const char *str, const char *delim, int *out_count) {
+    char *s = nu_strdup(str);
     if (!s) return NULL;
 
     int count = 0;
-    char *token = strtok(s, delim);
+    char *token = nu_strtok(s, delim);
     while (token) {
         count++;
-        token = strtok(NULL, delim);
+        token = nu_strtok(NULL, delim);
     }
     free(s);
 
@@ -20,14 +21,14 @@ char** nu_str_split(const char *str, const char *delim, int *out_count) {
         return NULL;
     }
 
-    char **result = malloc(sizeof(char*) * count);
+    char **result = nu_alloc(mm, sizeof(char*) * count);
     if (!result) return NULL;
-    
-    s = strdup(str);
-    token = strtok(s, delim);
+
+    s = nu_strdup(str);
+    token = nu_strtok(s, delim);
     for (int i = 0; i < count; i++) {
-        result[i] = strdup(token);
-        token = strtok(NULL, delim);
+        result[i] = nu_strdup(token);
+        token = nu_strtok(NULL, delim);
     }
     free(s);
 
@@ -35,12 +36,14 @@ char** nu_str_split(const char *str, const char *delim, int *out_count) {
     return result;
 }
 
-void nu_str_free_list(char **list, int count) {
+void nu_str_free_list(nu_mm_t *mm, char **list, int count) {
     if (!list) return;
+    if (!mm) return;
+
     for (int i = 0; i < count; i++) {
-        free(list[i]);
+        nu_free(mm, list[i]);
     }
-    free(list);
+    nu_free(mm, list);
 }
 
 char* nu_str_trim(char *str) {

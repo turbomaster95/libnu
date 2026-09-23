@@ -126,3 +126,75 @@ char *nu_strdup(const char *s) {
     g_arena_offset += len;
     return dest;
 }
+
+char *nu_strtok_r(char *str, const char *delim, char **saveptr) {
+    char *s;
+
+    if (str != NULL) {
+        s = str;
+    } else if (saveptr != NULL && *saveptr != NULL) {
+        s = *saveptr;
+    } else {
+        return NULL;
+    }
+
+    while (*s != '\0') {
+        const char *d = delim;
+        int is_delim = 0;
+
+        while (*d != '\0') {
+            if (*s == *d) {
+                is_delim = 1;
+                break;
+            }
+            d++;
+        }
+
+        if (!is_delim) {
+            break; // Found start of token
+        }
+        s++;
+    }
+
+    if (*s == '\0') {
+        if (saveptr != NULL) {
+            *saveptr = s;
+        }
+        return NULL;
+    }
+
+    char *token_start = s;
+
+    while (*s != '\0') {
+        const char *d = delim;
+        int is_delim = 0;
+
+        while (*d != '\0') {
+            if (*s == *d) {
+                is_delim = 1;
+                break;
+            }
+            d++;
+        }
+
+        if (is_delim) {
+            *s = '\0'; // Null-terminate current token
+            if (saveptr != NULL) {
+                *saveptr = s + 1; // Save state for next call
+            }
+            return token_start;
+        }
+        s++;
+    }
+
+    if (saveptr != NULL) {
+        *saveptr = s;
+    }
+
+    return token_start;
+}
+
+char *nu_strtok(char *str, const char *delim) {
+    static char *static_saveptr = NULL;
+    return nu_strtok_r(str, delim, &static_saveptr);
+}

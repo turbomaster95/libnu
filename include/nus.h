@@ -56,6 +56,8 @@ char *nu_strncat(char *restrict dest, const char *restrict src, size_t n);
 char *nu_strchr(const char *s, int c);
 char *nu_strrchr(const char *s, int c);
 char *nu_strstr(const char *haystack, const char *needle);
+char *nu_strtok_r(char *str, const char *delim, char **saveptr);
+char *nu_strtok(char *str, const char *delim);
 
 #line 1 "nu_stdlib.h"
 

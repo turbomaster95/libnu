@@ -19,7 +19,7 @@ static void internal_proc_handler(int fd, void *data) {
     nu_proc_wrapper_t *wrapper = (nu_proc_wrapper_t*)data;
     char buf[512];
     ssize_t n = read(fd, buf, sizeof(buf) - 1);
-    
+
     if (n > 0) {
         buf[n] = '\0';
         if (wrapper->io_cb) wrapper->io_cb(buf, (size_t)n, wrapper->user_data);
@@ -31,7 +31,7 @@ static void internal_proc_handler(int fd, void *data) {
     }
 }
 
-bool nu_process_spawn(nu_loop_t *loop, nu_mm_t *mm, char *const argv[], nu_proc_io_cb stdout_cb, void *data) {
+bool nu_process_spawn(nu_loop_t *loop, char *const argv[], nu_proc_io_cb stdout_cb, void *data) {
     int p_fds[2];
     if (pipe(p_fds) < 0) return false;
 
@@ -57,11 +57,11 @@ bool nu_process_spawn(nu_loop_t *loop, nu_mm_t *mm, char *const argv[], nu_proc_
     // Parent
     close(p_fds[1]);
 
-    nu_proc_wrapper_t *wrapper = malloc(sizeof(nu_proc_wrapper_t));
+    nu_proc_wrapper_t *wrapper = nu_alloc(loop->mm, sizeof(nu_proc_wrapper_t));
     wrapper->io_cb = stdout_cb;
     wrapper->user_data = data;
 
-    return nu_loop_add_fd(loop, mm, p_fds[0], internal_proc_handler, wrapper);
+    return nu_loop_add_fd(loop, p_fds[0], internal_proc_handler, wrapper);
 }
 
 bool nu_daemonize(void) {
@@ -103,7 +103,7 @@ bool nu_daemonize(void) {
         dup2(dev_null, STDIN_FILENO);  // Redirect stdin
         dup2(dev_null, STDOUT_FILENO); // Redirect stdout
         dup2(dev_null, STDERR_FILENO); // Redirect stderr
-        
+
         if (dev_null > STDERR_FILENO) {
             close(dev_null);
         }

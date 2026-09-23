@@ -9,6 +9,7 @@
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 700
 #endif
+
 #ifdef HAVE_UCONTEXT_H
 #include <ucontext.h>
 #endif
@@ -213,7 +214,6 @@ typedef enum {
 // or NULL if the allocation fails or an unsupported hash type is provided.
 char* nu_hash_encode(nu_mm_t *mm, nu_hash_type_t type, const uint8_t *data, size_t len);
 
-
 // Encodes an AST node tree into a raw JSON string stream.
 // Allocates the resulting buffer from the provided memory manager.
 char* nu_json_encode(nu_mm_t *mm, const nu_ast_node_t *root);
@@ -342,12 +342,7 @@ void nu_arg_print_help(nu_arg_parser_t *ap, nu_arg_def_t defs[], size_t def_coun
 // Cleans up the argument parser allocations cleanly
 void nu_arg_destroy(nu_arg_parser_t *ap);
 
-struct nu_loop {
-    int epoll_fd;
-    int inotify_fd;
-    nu_map_t *items_map;
-};
-
+// Forward def for lua
 typedef struct nu_loop nu_loop_t;
 
 typedef struct nu_lua nu_lua_t;
@@ -510,37 +505,44 @@ nu_calc_t nu_calc_mul(nu_calc_t a, nu_calc_t b);
 void nu_calc_print(nu_calc_t val);
 
 // Memory-safe string split. Returns heap-allocated array of strings. Free with nu_str_free_list.
-char** nu_str_split(const char *str, const char *delim, int *out_count);
-void   nu_str_free_list(char **list, int count);
+char** nu_str_split(nu_mm_t *mm, const char *str, const char *delim, int *out_count);
+void   nu_str_free_list(nu_mm_t *mm, char **list, int count);
 
 // Trims whitespace in-place (modifies the buffer)
 char* nu_str_trim(char *str);
 
 typedef void (*nu_event_cb)(int fd, void *data);
 
-nu_loop_t* nu_loop_create(nu_mm_t *mm);
-void       nu_loop_destroy(nu_loop_t *loop, nu_mm_t *mm);
-
-// Add a standard file descriptor to watch for readability
-bool       nu_loop_add_fd(nu_loop_t *loop, nu_mm_t *mm, int fd, nu_event_cb cb, void *data);
-
-// Add a timer (interval in milliseconds)
-bool       nu_loop_add_timer(nu_loop_t *loop, nu_mm_t *mm, int ms, nu_event_cb cb, void *data);
-
-// Watch a file/directory path for modifications
-bool       nu_loop_add_watch(nu_loop_t *loop, nu_mm_t *mm, const char *path, nu_event_cb cb, void *data);
-
-// Run the loop indefinitely. Returns false on catastrophic failure.
-bool       nu_loop_run(nu_loop_t *loop);
-
-typedef void (*nu_ipc_cb)(const char *msg, int client_fd, void *data);
+typedef struct nu_loop {
+    int epoll_fd;
+    int inotify_fd;
+    nu_map_t *items_map;
+    nu_mm_t *mm;
+} nu_loop_t;
 
 typedef struct {
     int fd;
     nu_event_cb cb;
     void *data;
     bool is_inotify;
-} nu_item_t;
+} nu_loop_item_t;
+
+nu_loop_t* nu_loop_create(nu_mm_t *mm);
+void       nu_loop_destroy(nu_loop_t *loop);
+
+// Add a standard file descriptor to watch for readability
+bool       nu_loop_add_fd(nu_loop_t *loop, int fd, nu_event_cb cb, void *data);
+
+// Add a timer (interval in milliseconds)
+bool       nu_loop_add_timer(nu_loop_t *loop, int ms, nu_event_cb cb, void *data);
+
+// Watch a file/directory path for modifications
+bool       nu_loop_add_watch(nu_loop_t *loop, const char *path, nu_event_cb cb, void *data);
+
+// Run the loop indefinitely. Returns false on catastrophic failure.
+bool       nu_loop_run(nu_loop_t *loop);
+
+typedef void (*nu_ipc_cb)(const char *msg, int client_fd, void *data);
 
 // Starts a blocking IPC server. Typically spawned in its own thread or used as a standalone daemon.
 // Automatically creates a UNIX socket at 'sock_path'.
@@ -551,10 +553,10 @@ char* nu_ipc_send(nu_mm_t *mm, const char *sock_path, const char *message);
 
 // Mask and monitor system signals via epoll loop.
 // Pass signum (e.g., SIGINT, SIGTERM). Returns false on failure.
-bool nu_loop_add_signal(nu_loop_t *loop, nu_mm_t *mm, int signum, nu_event_cb cb, void *data);
+bool nu_loop_add_signal(nu_loop_t *loop, int signum, nu_event_cb cb, void *data);
 
 // Exec background processes without hanging. Pipeline matches standard argv format.
-bool nu_process_spawn(nu_loop_t *loop, nu_mm_t *mm, char *const argv[], nu_proc_io_cb stdout_cb, void *data);
+bool nu_process_spawn(nu_loop_t *loop, char *const argv[], nu_proc_io_cb stdout_cb, void *data);
 
 // Daemonize easily
 bool nu_daemonize(void);

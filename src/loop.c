@@ -44,18 +44,19 @@ nu_loop_t* nu_loop_create(nu_mm_t *mm) {
     return loop;
 }
 
-void nu_loop_destroy(nu_loop_t *loop, nu_mm_t *mm) {
+void nu_loop_destroy(nu_loop_t *loop) {
     if (!loop) return;
     if (loop->epoll_fd >= 0) close(loop->epoll_fd);
     if (loop->inotify_fd >= 0) close(loop->inotify_fd);
-    
+
     nu_map_destroy(loop->items_map);
+    nu_mm_t *mm = loop->mm;
     nu_free(mm, loop);
 }
 
-bool nu_loop_add_fd(nu_loop_t *loop, nu_mm_t *mm, int fd, nu_event_cb cb, void *data) {
-    if (!mm) return false;
-    nu_item_t *item = nu_alloc(mm, sizeof(nu_item_t));
+bool nu_loop_add_fd(nu_loop_t *loop, int fd, nu_event_cb cb, void *data) {
+    if (!loop) return false;
+    nu_loop_item_t *item = nu_alloc(loop->mm, sizeof(nu_loop_item_t));
     if (!item) return false;
     
     item->fd = fd; 
@@ -87,7 +88,7 @@ bool nu_loop_add_fd(nu_loop_t *loop, int fd, nu_event_cb cb, void *data) {
 
 #if defined(HAVE_SYS_EPOLL_H) && defined(HAVE_TIMERFD_CREATE)
 
-bool nu_loop_add_timer(nu_loop_t *loop, nu_mm_t *mm, int ms, nu_event_cb cb, void *data) {
+bool nu_loop_add_timer(nu_loop_t *loop, int ms, nu_event_cb cb, void *data) {
     int tfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
     if (tfd < 0) return false;
     
@@ -96,7 +97,7 @@ bool nu_loop_add_timer(nu_loop_t *loop, nu_mm_t *mm, int ms, nu_event_cb cb, voi
         .it_value    = { ms / 1000, (ms % 1000) * 1000000 }
     };
     timerfd_settime(tfd, 0, &ts, NULL);
-    return nu_loop_add_fd(loop, mm, tfd, cb, data);
+    return nu_loop_add_fd(loop, tfd, cb, data);
 }
 
 #else
@@ -113,13 +114,12 @@ static void internal_inotify_handler(int fd, void *data) {
     (void)data;
 }
 
-bool nu_loop_add_watch(nu_loop_t *loop, nu_mm_t *mm, const char *path, nu_event_cb cb, void *data) {
+bool nu_loop_add_watch(nu_loop_t *loop, const char *path, nu_event_cb cb, void *data) {
     if (loop->inotify_fd < 0) {
         loop->inotify_fd = inotify_init1(IN_NONBLOCK);
         if (loop->inotify_fd < 0) return false;
-        if (!mm) return false;
 
-        nu_item_t *i_item = nu_alloc(mm, sizeof(nu_item_t));
+        nu_loop_item_t *i_item = nu_alloc(loop->mm, sizeof(nu_loop_item_t));
         if (!i_item) return false;
         i_item->fd = loop->inotify_fd; 
         i_item->cb = internal_inotify_handler; 
@@ -132,8 +132,7 @@ bool nu_loop_add_watch(nu_loop_t *loop, nu_mm_t *mm, const char *path, nu_event_
     int wd = inotify_add_watch(loop->inotify_fd, path, IN_MODIFY);
     if (wd < 0) return false;
     
-    if (!mm) return false;
-    nu_item_t *user_item = nu_alloc(mm, sizeof(nu_item_t));
+    nu_loop_item_t *user_item = nu_alloc(loop->mm, sizeof(nu_loop_item_t));
     if (!user_item) return false;
     user_item->fd = wd; 
     user_item->cb = cb; 
@@ -165,7 +164,7 @@ bool nu_loop_run(nu_loop_t *loop) {
             return false;
         }
         for (int i = 0; i < nfds; i++) {
-            nu_item_t *item = (nu_item_t*)events[i].data.ptr;
+            nu_loop_item_t *item = (nu_loop_item_t*)events[i].data.ptr;
             
 #if defined(HAVE_SYS_INOTIFY_H)
             if (item->fd == loop->inotify_fd) {
@@ -178,7 +177,7 @@ bool nu_loop_run(nu_loop_t *loop) {
                         char key[32];
                         nu_snprintf(key, sizeof(key), "wd_%d", event->wd);
                         
-                        nu_item_t *watch_item = (nu_item_t*)nu_map_get(loop->items_map, key);
+                        nu_loop_item_t *watch_item = (nu_loop_item_t*)nu_map_get(loop->items_map, key);
                         if (watch_item && watch_item->cb) {
                             watch_item->cb(event->wd, watch_item->data);
                         }

@@ -29,13 +29,13 @@ static void internal_signal_handler(int fd, void *data) {
     ssize_t s = read(fd, &fdsi, sizeof(struct signalfd_siginfo));
     if (s != sizeof(struct signalfd_siginfo)) return;
 
-    nu_item_t *sig_item = (nu_item_t*)data;
+    nu_loop_item_t *sig_item = (nu_loop_item_t*)data;
     if (sig_item && sig_item->cb) {
         sig_item->cb(fdsi.ssi_signo, sig_item->data);
     }
 }
 
-bool nu_loop_add_signal(nu_loop_t *loop, nu_mm_t *mm, int signum, nu_event_cb cb, void *data) {
+bool nu_loop_add_signal(nu_loop_t *loop, int signum, nu_event_cb cb, void *data) {
     sigset_t mask;
     sigemptyset(&mask);
     sigaddset(&mask, signum);
@@ -45,8 +45,7 @@ bool nu_loop_add_signal(nu_loop_t *loop, nu_mm_t *mm, int signum, nu_event_cb cb
     int sfd = signalfd(-1, &mask, SFD_NONBLOCK | SFD_CLOEXEC);
     if (sfd < 0) return false;
 
-    if (!mm) return false;
-    nu_item_t *sig_item = nu_alloc(mm, sizeof(nu_item_t));
+    nu_loop_item_t *sig_item = nu_alloc(loop->mm, sizeof(nu_loop_item_t));
     if (!sig_item) {
         close(sfd);
         return false;
@@ -56,9 +55,9 @@ bool nu_loop_add_signal(nu_loop_t *loop, nu_mm_t *mm, int signum, nu_event_cb cb
     sig_item->data = data;
     sig_item->is_inotify = false;
 
-    nu_item_t *epoll_hook = nu_alloc(mm, sizeof(nu_item_t));
+    nu_loop_item_t *epoll_hook = nu_alloc(loop->mm, sizeof(nu_loop_item_t));
     if (!epoll_hook) {
-        nu_free(mm, sig_item);
+        nu_free(loop->mm, sig_item);
         close(sfd);
         return false;
     }
@@ -70,8 +69,8 @@ bool nu_loop_add_signal(nu_loop_t *loop, nu_mm_t *mm, int signum, nu_event_cb cb
     struct epoll_event ev = { .events = EPOLLIN, .data.ptr = epoll_hook };
 
     if (epoll_ctl(loop->epoll_fd, EPOLL_CTL_ADD, sfd, &ev) < 0) {
-        nu_free(mm, epoll_hook);
-        nu_free(mm, sig_item);
+        nu_free(loop->mm, epoll_hook);
+        nu_free(loop->mm, sig_item);
         close(sfd);
         return false;
     }
