@@ -57,7 +57,9 @@ typedef enum {
     NU_MM_ARENA,
     NU_MM_BUDDY,
     NU_MM_SLAB,
-    NU_MM_SLOB
+    NU_MM_SLOB,
+    NU_MM_POOL,
+    NU_MM_STACK
 } nu_mm_type_t;
 
 // Creates a new nu_mm instance with the specified type,
@@ -66,6 +68,9 @@ nu_mm_t* nu_mm_create(nu_mm_type_t type, void *backing_mem, size_t size);
 
 // Destroys a nu_mm instance
 void nu_mm_destroy(nu_mm_t *mm);
+
+// Resets a nu_mm instance to zero
+void nu_mm_reset(nu_mm_t *mm);
 
 // Alloc, Free and Realloc for a specific instance.
 void* nu_alloc(nu_mm_t *mm, size_t size);

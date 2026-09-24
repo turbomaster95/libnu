@@ -1,57 +1,131 @@
 #include <nu.h>
-#include <nus.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stddef.h>
 #include <ctype.h>
+#include <string.h>
 
-char** nu_str_split(nu_mm_t *mm, const char *str, const char *delim, int *out_count) {
-    char *s = nu_strdup(str);
-    if (!s) return NULL;
+static bool nu_str_is_delim(char c, const char *delim) {
+    if (!delim) return false;
 
-    int count = 0;
-    char *token = nu_strtok(s, delim);
-    while (token) {
-        count++;
-        token = nu_strtok(NULL, delim);
+    while (*delim) {
+        if (c == *delim) return true;
+        delim++;
     }
-    free(s);
 
-    if (count == 0) {
+    return false;
+}
+
+char **nu_str_split(nu_mm_t *mm, const char *str, const char *delim, int *out_count) {
+    if (out_count) {
         *out_count = 0;
+    }
+
+    if (!mm || !str || !delim || !out_count) {
         return NULL;
     }
 
-    char **result = nu_alloc(mm, sizeof(char*) * count);
-    if (!result) return NULL;
+    size_t count = 0;
+    const char *p = str;
 
-    s = nu_strdup(str);
-    token = nu_strtok(s, delim);
-    for (int i = 0; i < count; i++) {
-        result[i] = nu_strdup(token);
-        token = nu_strtok(NULL, delim);
+    while (*p) {
+        while (*p && nu_str_is_delim(*p, delim)) {
+            p++;
+        }
+
+        if (!*p) {
+            break;
+        }
+
+        count++;
+
+        while (*p && !nu_str_is_delim(*p, delim)) {
+            p++;
+        }
     }
-    free(s);
 
-    *out_count = count;
+    if (count == 0) {
+        return NULL;
+    }
+
+    if (count > ((size_t)-1) / sizeof(char *)) {
+        return NULL;
+    }
+
+    char **result = (char **)nu_alloc(mm, count * sizeof(char *));
+    if (!result) {
+        return NULL;
+    }
+
+    p = str;
+
+    for (size_t i = 0; i < count; i++) {
+        while (*p && nu_str_is_delim(*p, delim)) {
+            p++;
+        }
+
+        const char *start = p;
+
+        while (*p && !nu_str_is_delim(*p, delim)) {
+            p++;
+        }
+
+        size_t len = (size_t)(p - start);
+
+        if (len == (size_t)-1) {
+            nu_free(mm, result);
+            return NULL;
+        }
+
+        result[i] = (char *)nu_alloc(mm, len + 1);
+        if (!result[i]) {
+            for (size_t j = 0; j < i; j++) {
+                nu_free(mm, result[j]);
+            }
+            nu_free(mm, result);
+            return NULL;
+        }
+
+        memcpy(result[i], start, len);
+        result[i][len] = '\0';
+    }
+
+    *out_count = (int)count;
     return result;
 }
 
 void nu_str_free_list(nu_mm_t *mm, char **list, int count) {
-    if (!list) return;
-    if (!mm) return;
+    if (!mm || !list || count < 0) {
+        return;
+    }
 
     for (int i = 0; i < count; i++) {
-        nu_free(mm, list[i]);
+        if (list[i]) {
+            nu_free(mm, list[i]);
+        }
     }
+
     nu_free(mm, list);
 }
 
-char* nu_str_trim(char *str) {
-    char *end;
-    while (isspace((unsigned char)*str)) str++;
-    if (*str == 0) return str;
-    end = str + strlen(str) - 1;
-    while (end > str && isspace((unsigned char)*end)) end--;
-    end[1] = '\0';
+char *nu_str_trim(char *str) {
+    if (!str) {
+        return NULL;
+    }
+
+    while (isspace((unsigned char)*str)) {
+        str++;
+    }
+
+    if (*str == '\0') {
+        return str;
+    }
+
+    char *end = str + strlen(str);
+
+    while (end > str && isspace((unsigned char)end[-1])) {
+        end--;
+    }
+
+    *end = '\0';
+
     return str;
 }
