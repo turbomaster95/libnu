@@ -26,71 +26,93 @@ configure_file(
     "${CMAKE_CURRENT_BINARY_DIR}/include/config.h"
 )
 
-include_directories(include "${CMAKE_CURRENT_BINARY_DIR}")
+include_directories(
+    include
+    "${CMAKE_CURRENT_BINARY_DIR}"
+)
 
 set(LIB_SOURCES
-	src/main.c
-	src/mm/arena.c
-	src/mm/buddy.c
-	src/mm/slab.c
-	src/mm/slob.c
-	src/ipc.c
-	src/loop.c
-	src/str.c
-	src/proc.c
-	src/log.c
-	src/sig.c
-	src/mm.c
-	src/map.c
-	src/lex.c
-	src/ast.c
-	src/pratt.c
-	src/xtea.c
-	src/hash.c
-	src/hashes/md5.c
-	src/hashes/sha1.c
-	src/hashes/sha256.c
-	src/json.c
-	src/trie.c
-	src/lz4.c
-	src/time.c
-	src/print.c
-	src/argpars.c
-	src/lua.c
-	src/py.c
-	src/third-party/pocketpy.c
-	src/buf.c
-	src/strsp.c
-	src/std/string.c
-	src/std/stdlib.c
-	src/calc.c
+    src/core/main.c
+    src/core/log.c
+
+    src/memory/mm.c
+    src/memory/mm/arena.c
+    src/memory/mm/buddy.c
+    src/memory/mm/slab.c
+    src/memory/mm/slob.c
+
+    src/containers/buf.c
+    src/containers/hash.c
+    src/containers/map.c
+    src/containers/trie.c
+
+    src/strings/str.c
+    src/strings/strsp.c
+
+    src/std/string.c
+    src/std/stdlib.c
+
+    src/io/print.c
+
+    src/time/time.c
+
+    src/math/calc.c
+
+    src/parsing/lex.c
+    src/parsing/ast.c
+    src/parsing/pratt.c
+
+    src/crypto/xtea.c
+    src/crypto/hashes/md5.c
+    src/crypto/hashes/sha1.c
+    src/crypto/hashes/sha256.c
+
+    src/compression/lz4.c
+
+    src/serialz/json.c
+
+    src/async/loop.c
+
+    src/process/ipc.c
+    src/process/proc.c
+    src/process/sig.c
+
+    src/cli/argpars.c
+
+    src/scripting/lua.c
+    src/scripting/py.c
+    src/scripting/third-party/pocketpy.c
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Generic" OR WASI)
-    list(REMOVE_ITEM LIB_SOURCES "src/ipc.c")
-    list(REMOVE_ITEM LIB_SOURCES "src/loop.c")
-    list(REMOVE_ITEM LIB_SOURCES "src/proc.c")
-    list(REMOVE_ITEM LIB_SOURCES "src/sig.c")
-    list(REMOVE_ITEM LIB_SOURCES "src/lua.c")
+    list(REMOVE_ITEM LIB_SOURCES "src/process/ipc.c")
+    list(REMOVE_ITEM LIB_SOURCES "src/async/loop.c")
+    list(REMOVE_ITEM LIB_SOURCES "src/process/proc.c")
+    list(REMOVE_ITEM LIB_SOURCES "src/process/sig.c")
+    list(REMOVE_ITEM LIB_SOURCES "src/scripting/lua.c")
 endif()
 
 set(NU_TARGETS "")
 
 if(NU_STATIC)
     add_library(nu_static STATIC ${LIB_SOURCES})
-    set_target_properties(nu_static PROPERTIES OUTPUT_NAME nu)
-    set_target_properties(nu_static PROPERTIES 
-		POSITION_INDEPENDENT_CODE ON
+
+    set_target_properties(nu_static PROPERTIES
+        OUTPUT_NAME nu
+        POSITION_INDEPENDENT_CODE ON
     )
+
     list(APPEND NU_TARGETS nu_static)
 endif()
 
 if(NU_SHARED)
     add_library(nu_shared SHARED ${LIB_SOURCES})
-    set_target_properties(nu_shared PROPERTIES OUTPUT_NAME nu)
-    set_target_properties(nu_shared PROPERTIES 
-		POSITION_INDEPENDENT_CODE ON
+
+    set_target_properties(nu_shared PROPERTIES
+        OUTPUT_NAME nu
+        POSITION_INDEPENDENT_CODE ON
     )
+
     list(APPEND NU_TARGETS nu_shared)
 endif()
 
@@ -101,7 +123,9 @@ install(TARGETS ${NU_TARGETS}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-install(FILES include/nu.h  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(FILES include/nuo.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(FILES include/nus.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-
+install(FILES
+    include/nu.h
+    include/nuo.h
+    include/nus.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
