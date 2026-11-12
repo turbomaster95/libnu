@@ -203,13 +203,30 @@ def download(url, destination, pname, retries=5, timeout=8):
 
 def apply_patch(patch, file):
     path = pathlib.Path(file)
-
     data = path.read_text()
 
-    old, new = patch["replace"]
+    old, new = patch
 
     if old in data:
         path.write_text(data.replace(old, new))
+    elif old not in data:
+        raise ValueError(f"Patch target not found in {file}: {old!r}")
+
+def update_gitignore(paths):
+    gitignore = pathlib.Path(".gitignore")
+
+    content = gitignore.read_text() if gitignore.exists() else ""
+    existing = {line.strip() for line in content.splitlines()}
+
+    new_entries = [path for path in paths if path not in existing]
+    if not new_entries:
+        return
+
+    with gitignore.open("a") as f:
+        if content and not content.endswith("\n"):
+            f.write("\n")
+        f.write("# Files managed by regret\n")
+        f.write("\n".join(new_entries) + "\n")
 
 
 def main():
@@ -244,6 +261,8 @@ def main():
         count += 1
 
     elapsed = time.monotonic() - start_time
+
+    update_gitignore(jsf["depends"].keys())
 
     print()
     print(f"{count} dependencies fetched in {elapsed:.1f}s")

@@ -14,3 +14,8 @@ build-*/
 
 # DONT Ignore these files
 !.clangd
+
+# Files managed by regret
+include/third-party/minilua.h
+include/third-party/pocketpy.h
+src/scripting/third-party/pocketpy.c
