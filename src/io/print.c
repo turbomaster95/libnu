@@ -171,6 +171,10 @@ int nu_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 
     const char *p = format;
 
+    va_list args;
+    va_copy(args, ap);
+
+
     while (*p) {
         if (*p != '%') {
             nu_fmt_putc(&out, *p++);
@@ -212,7 +216,7 @@ int nu_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
         }
 
         if (*p == '*') {
-            width = nu_fmt_get_int_arg(&ap);
+            width = nu_fmt_get_int_arg(&args);
 
             if (width < 0) {
                 left_align = 1;
@@ -236,7 +240,7 @@ int nu_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
             precision = 0;
 
             if (*p == '*') {
-                precision = nu_fmt_get_int_arg(&ap);
+                precision = nu_fmt_get_int_arg(&args);
 
                 if (precision < 0) {
                     precision = -1;

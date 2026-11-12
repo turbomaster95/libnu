@@ -31,6 +31,18 @@ include_directories(
     "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/regret.py" check
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    RESULT_VARIABLE REGRET_RESULT
+)
+
+if(NOT REGRET_RESULT STREQUAL "0")
+    message(FATAL_ERROR "Regret dependency check failed")
+endif()
+
 set(LIB_SOURCES
     src/core/main.c
     src/core/log.c
@@ -114,6 +126,19 @@ if(NU_SHARED)
     )
 
     list(APPEND NU_TARGETS nu_shared)
+endif()
+
+if(NU_TARGETS)
+    add_custom_target(regret_check ALL
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/regret.py" check
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMENT "Checking Regret-managed files"
+        VERBATIM
+    )
+
+    foreach(target IN LISTS NU_TARGETS)
+        add_dependencies(${target} regret_check)
+    endforeach()
 endif()
 
 include(GNUInstallDirs)

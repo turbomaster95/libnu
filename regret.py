@@ -8,6 +8,7 @@ from urllib.error import HTTPError, URLError
 import socket
 import time
 import subprocess
+import hashlib
 
 
 class RegLog:
@@ -27,6 +28,8 @@ def load_conf():
     with open(mainfile, "r") as f:
         return json.load(f)
 
+def save_conf(config):
+    mainfile.write_text(json.dumps(config, indent=4) + "\n")
 
 def get_url(file, release=False):
     if release == False:
@@ -200,6 +203,35 @@ def download(url, destination, pname, retries=5, timeout=8):
                 except OSError:
                     pass
 
+def update_gitignore(paths):
+    gitignore = pathlib.Path(".gitignore")
+    content = gitignore.read_text() if gitignore.exists() else ""
+    lines = content.splitlines()
+
+    marker = "# Files managed by regret"
+    existing = {line.strip() for line in lines}
+    new_entries = [str(path) for path in paths if str(path) not in existing]
+
+    if not new_entries:
+        return
+
+    if lines and lines[-1].strip():
+        lines.append("")
+
+    if marker not in existing:
+        lines.append(marker)
+
+    lines.extend(new_entries)
+    gitignore.write_text("\n".join(lines) + "\n")
+
+
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
 
 def apply_patch(patch, file):
     path = pathlib.Path(file)
@@ -209,64 +241,73 @@ def apply_patch(patch, file):
 
     if old in data:
         path.write_text(data.replace(old, new))
-    elif old not in data:
-        raise ValueError(f"Patch target not found in {file}: {old!r}")
+    elif new not in data:
+        raise RuntimeError(f"Patch text not found in {file}")
 
-def update_gitignore(paths):
-    gitignore = pathlib.Path(".gitignore")
-
-    content = gitignore.read_text() if gitignore.exists() else ""
-    existing = {line.strip() for line in content.splitlines()}
-
-    new_entries = [path for path in paths if path not in existing]
-    if not new_entries:
-        return
-
-    with gitignore.open("a") as f:
-        if content and not content.endswith("\n"):
-            f.write("\n")
-        f.write("# Files managed by regret\n")
-        f.write("\n".join(new_entries) + "\n")
-
-
-def main():
+def run_regret(check_only=False, update=False):
     log = RegLog("regret")
     log.log("This is Regret v0.0.1")
     log.log(f"using depfile: {mainfile}")
-    log.log("fetching dependencies...")
+    log.log("checking dependencies..." if check_only else "fetching dependencies...")
     print()
 
-    jsf = load_conf()
-
+    config = load_conf()
+    dependencies = config.get("depends", {})
     start_time = time.monotonic()
-    count = 0
 
-    for dep in jsf["depends"]:
-        if jsf["depends"][dep]["rel"]:
-            file = get_url(jsf["depends"][dep]["file"], jsf["depends"][dep]["rel"])
+    for dep, info in dependencies.items():
+        path = pathlib.Path(dep)
+        expected_hash = info.get("sha256")
+
+        valid = path.is_file()
+        if valid and expected_hash:
+            valid = sha256_file(path).lower() == expected_hash.lower()
+
+        if check_only and valid:
+            print(f"  {info['pname']:<16} ✓ already present")
         else:
-            file = get_url(jsf["depends"][dep]["file"])
+            url = get_url(info["file"], info.get("rel", False))
+            download(url, dep, info["pname"])
 
-        download(file, dep, jsf["depends"][dep]["pname"])
+        patch = info.get("replace")
+        if patch:
+            apply_patch(patch, dep)
 
-        try:
-            if jsf["depends"][dep]["replace"]:
-                print()
-                log.log(f"Patching file {dep}")
-                apply_patch(jsf["depends"][dep]["replace"], dep)
+        actual_hash = sha256_file(path)
 
-        except KeyError:
-            pass
+        if expected_hash and not update:
+            if actual_hash.lower() != expected_hash.lower():
+                raise RuntimeError(
+                    f"SHA-256 mismatch for {dep}: expected "
+                    f"{expected_hash}, got {actual_hash}. "
+                    "Run 'regret.py update' to accept a new version."
+                )
 
-        count += 1
+        if not expected_hash or update:
+            info["sha256"] = actual_hash
+            save_conf(config)
+
+        patch = info.get("replace")
+        if patch:
+            apply_patch(patch, dep)
 
     elapsed = time.monotonic() - start_time
-
-    update_gitignore(jsf["depends"].keys())
-
     print()
-    print(f"{count} dependencies fetched in {elapsed:.1f}s")
+    print(f"{len(dependencies)} dependencies checked in {elapsed:.1f}s")
+    update_gitignore(dependencies.keys())
 
+
+def main():
+    import sys
+
+    if len(sys.argv) == 2 and sys.argv[1] == "check":
+        run_regret(check_only=True)
+    elif len(sys.argv) == 2 and sys.argv[1] == "update":
+        run_regret(update=True)
+    elif len(sys.argv) == 1:
+        run_regret()
+    else:
+        raise SystemExit(f"Usage: {sys.argv[0]} [check|update]")
 
 if __name__ == "__main__":
     main()
