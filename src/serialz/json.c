@@ -926,7 +926,7 @@ static void json_free_node(nu_mm_t *mm, nu_ast_node_t *node) {
     if ((node->type == NU_AST_JSON_STRING ||
          node->type == NU_AST_JSON_PAIR) &&
         node->val.str) {
-        nu_free(mm, node->val.str);
+        nu_free(mm, (void*)node->val.str);
     }
 
     nu_free(mm, node);
