@@ -14,6 +14,7 @@ build-*/
 
 # DONT Ignore these files
 !.clangd
+!.regretconf
 
 # Files managed by regret
 include/third-party/minilua.h
