@@ -1,0 +1,22 @@
+{
+    "depends": {
+        "include/third-party/minilua.h": {
+            "file": "https://raw.githubusercontent.com/edubart/minilua/main/minilua.h",
+            "rel": true,
+            "pname": "minilua",
+            "sha256": "e476645478b3e4c3d3794d3a1a11a2a928ddab0185c45947697daaee898a9229"
+        },
+        "include/third-party/pocketpy.h": {
+            "file": "https://github.com/pocketpy/pocketpy/releases/download/v2.2.0/pocketpy.h",
+            "rel": true,
+            "pname": "pocketpy-header",
+            "sha256": "43864cfa090d65b80915467900430dfae52c769f13d6edb137d0227d1fbe03ad"
+        },
+        "src/scripting/third-party/pocketpy.c": {
+            "file": "https://github.com/pocketpy/pocketpy/releases/download/v2.2.0/pocketpy.c",
+            "rel": true,
+            "pname": "pocketpy-source",
+            "sha256": "0f0c19071b4fd0b37cb292e15bea49ca163f151af901b00893d3a2005bb056e6"
+        }
+    }
+}
