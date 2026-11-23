@@ -350,16 +350,16 @@ namespace nu {
     public:
         using Span = nu_span_t;
 
-        static char **split(const char *str, const char *delimiter, int *count) {
-            return nu_str_split(str, delimiter, count);
+        static char **split(memory::Manager &mm, const char *str, const char *delimiter, int *count) {
+            return nu_str_split(mm.native(), str, delimiter, count);
         }
 
         static char **split(const std::string &str, const std::string &delimiter, int *count) {
             return split(str.c_str(), delimiter.c_str(), count);
         }
 
-        static void free_list(char **list, int count) {
-            nu_str_free_list(list, count);
+        static void free_list(memory::Manager &mm, char **list, int count) {
+            nu_str_free_list(mm.native(), list, count);
         }
 
         static char *trim(char *str) {
@@ -570,25 +570,25 @@ namespace nu {
 
         public:
             explicit EventLoop(memory::Manager &manager) : mm(manager.native()), handle(nu_loop_create(mm)) {}
-            ~EventLoop() { if (handle) nu_loop_destroy(handle, mm); }
+            ~EventLoop() { if (handle) nu_loop_destroy(handle); }
 
             EventLoop(const EventLoop &) = delete;
             EventLoop &operator=(const EventLoop &) = delete;
 
             bool add_fd(int fd, Callback callback, void *data = nullptr) {
-                return handle && nu_loop_add_fd(handle, mm, fd, callback, data);
+                return handle && nu_loop_add_fd(handle, fd, callback, data);
             }
 
             bool add_timer(int milliseconds, Callback callback, void *data = nullptr) {
-                return handle && nu_loop_add_timer(handle, mm, milliseconds, callback, data);
+                return handle && nu_loop_add_timer(handle, milliseconds, callback, data);
             }
 
             bool add_watch(const char *path, Callback callback, void *data = nullptr) {
-                return handle && nu_loop_add_watch(handle, mm, path, callback, data);
+                return handle && nu_loop_add_watch(handle, path, callback, data);
             }
 
             bool add_signal(int signal, Callback callback, void *data = nullptr) {
-                return handle && nu_loop_add_signal(handle, mm, signal, callback, data);
+                return handle && nu_loop_add_signal(handle, signal, callback, data);
             }
 
             bool run() {
@@ -622,8 +622,8 @@ namespace nu {
 
         using IOCallback = nu_proc_io_cb;
 
-        inline bool spawn(event::EventLoop &loop, memory::Manager &mm, char *const argv[], IOCallback callback = nullptr, void *data = nullptr) {
-            return nu_process_spawn(loop.native(), mm.native(), argv, callback, data);
+        inline bool spawn(event::EventLoop &loop, char *const argv[], IOCallback callback = nullptr, void *data = nullptr) {
+            return nu_process_spawn(loop.native(), argv, callback, data);
         }
 
     } // namespace process

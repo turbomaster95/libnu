@@ -16,7 +16,11 @@
             "file": "https://github.com/pocketpy/pocketpy/releases/download/v2.2.0/pocketpy.c",
             "rel": true,
             "pname": "pocketpy-source",
-            "sha256": "0f0c19071b4fd0b37cb292e15bea49ca163f151af901b00893d3a2005bb056e6"
+            "sha256": "b40ec5b9b2986b93ef829e5047ce0358c4ef08a188af4cfcbd7461b2b95f6751",
+            "replace": [
+                "#include \"pocketpy.h\"",
+                "#include <third-party/pocketpy.h>"
+            ]
         }
     }
 }

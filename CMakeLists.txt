@@ -52,6 +52,8 @@ set(LIB_SOURCES
     src/memory/mm/buddy.c
     src/memory/mm/slab.c
     src/memory/mm/slob.c
+    src/memory/mm/pool.c
+    src/memory/mm/stack.c
 
     src/containers/buf.c
     src/containers/hash.c
@@ -94,6 +96,8 @@ set(LIB_SOURCES
     src/scripting/lua.c
     src/scripting/py.c
     src/scripting/third-party/pocketpy.c
+
+#    src/thread/fibersched.c
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Generic" OR WASI)

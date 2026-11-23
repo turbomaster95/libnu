@@ -11,10 +11,12 @@
 configure
 build/
 build-*/
+.vscode/compile_commands.json
 
 # DONT Ignore these files
 !.clangd
 !.regretconf
+!.vscode/
 
 # Files managed by regret
 include/third-party/minilua.h
